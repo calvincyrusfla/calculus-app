@@ -543,13 +543,482 @@
     });
   }
 
+  /* ============================================================ BLITZ 2 generators */
+  function polyArr(coeffs, v) {
+    v = v || 'x';
+    const n = coeffs.length - 1;
+    return poly(coeffs.map((c, i) => [c, n - i === 0 ? '' : n - i === 1 ? v : `${v}^${n - i}`]));
+  }
+  function mul(a, b) {
+    const r = new Array(a.length + b.length - 1).fill(0);
+    a.forEach((x, i) => b.forEach((y, j) => { r[i + j] += x * y; }));
+    return r;
+  }
+  function synth(coeffs, c) { // divide by (x - c)
+    const q = [coeffs[0]];
+    for (let i = 1; i < coeffs.length; i++) q.push(coeffs[i] + q[i - 1] * c);
+    const rem = q.pop();
+    return { q, rem };
+  }
+  const xm = (p, v) => `(${poly([[1, v || 'x'], [-p, '']])})`; // (x - p)
+  const cx = (a, b) => `${a === 0 ? '' : a + ' '}\\pm ${b === 1 ? '' : b}i`;
+  const setTex = items => `\\left\\{ ${items.join(', ')} \\right\\}`;
+  const evalPoly = (c, x) => c.reduce((s, k) => s * x + k, 0);
+
+  // 1. Identify the (non-vertical) asymptote
+  function q2_asym() {
+    if (Math.random() < 0.6) {
+      const d = pick([1, 2]), m = pick([2, 3, 4]), k = nz(-3, 3), b = nz(-6, 6), c = nz(-6, 6), g = nz(-6, 6);
+      const a = d * m, e = d * k;
+      const ans = poly([[m, 'x'], [-m * k, '']]);
+      return {
+        prompt: `Identify the asymptotes.<span class="bexpr">$f(x) = \\dfrac{${polyArr([a, 0, b, c])}}{${polyArr([d, e, g])}}$</span>`,
+        choices: [
+          `Slant asymptote: $y = ${ans}$`,
+          `Slant asymptote: $y = ${poly([[m, 'x'], [m * k, '']])}$`,
+          `Horizontal asymptote: $y = ${m}$`,
+          `Horizontal asymptote: $y = 0$`,
+        ],
+        why: `The numerator's degree is one more than the denominator's, so there is a slant asymptote. Divide: $${a}x^3 \\div ${d === 1 ? '' : d}x^2 = ${m}x$. Then $${m}x(${polyArr([d, e, g])}) = ${polyArr([a, m * e, m * g, 0])}$; subtracting leaves $${-m * e}x^2$ as the next leading term, and $${-m * e}x^2 \\div ${d === 1 ? '' : d}x^2 = ${-m * k}$. So $y = ${ans}$.`,
+        lesson: 'polynomial-rational',
+      };
+    }
+    let a, d;
+    do { a = nz(-6, 6); d = pick([1, 2, 3]); } while (Math.abs(a) === d);
+    const b = nz(-6, 6), c = nz(-8, 8), e = nz(-6, 6), g = nz(-8, 8);
+    return {
+      prompt: `Identify the asymptotes.<span class="bexpr">$f(x) = \\dfrac{${polyArr([a, b, c])}}{${polyArr([d, e, g])}}$</span>`,
+      choices: [
+        `Horizontal asymptote: $y = ${frac(a, d)}$`,
+        `Horizontal asymptote: $y = 0$`,
+        `Horizontal asymptote: $y = ${frac(d, a)}$`,
+        `Slant asymptote: $y = ${frac(a, d)}x$`,
+      ],
+      why: `The degrees are equal (both 2), so the horizontal asymptote is the ratio of leading coefficients: $y = \\dfrac{${a}}{${d}} = ${frac(a, d)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 2. Composition with absolute value, and its domain
+  function q2_compdomain() {
+    let a, b, c;
+    do { a = pick([-5, -4, -3, -2, 2, 3, 4, 5]); b = nz(-9, 9); c = nz(-9, 9); } while (a * c + b === 0);
+    const rn = Math.random() < 0.6;
+    const name = rn ? '(r \\circ n)(x)' : '(n \\circ r)(x)';
+    const inner = `\\left|${poly([[a, 'x'], [a * c + b, '']])}\\right|`;
+    const outer = `\\left|${poly([[a, 'x'], [b, '']])}\\right| ${c > 0 ? '+' : '-'} ${Math.abs(c)}`;
+    const ans = rn ? inner : outer, other = rn ? outer : inner;
+    const all = '(-\\infty, \\infty)', cut = `\\left(-\\infty, ${frac(-(a * c + b), a)}\\right)`;
+    const ch = (f, d) => `$${name} = ${f}$; domain: $${d}$`;
+    return {
+      prompt: `Find the indicated function and write its domain in interval notation.<span class="bexpr">$r(x) = \\left|${poly([[a, 'x'], [b, '']])}\\right|,\\quad n(x) = ${poly([[1, 'x'], [c, '']])},\\quad ${name} = \\,?$</span>`,
+      choices: [ch(ans, all), ch(other, all), ch(ans, cut), ch(other, cut)],
+      why: rn
+        ? `$(r \\circ n)(x) = r(n(x)) = \\left|${a}(${poly([[1, 'x'], [c, '']])}) ${b > 0 ? '+' : '-'} ${Math.abs(b)}\\right| = ${inner}$. Absolute value and linear functions accept every real number, so the domain is $(-\\infty, \\infty)$.`
+        : `$(n \\circ r)(x) = n(r(x)) = ${outer}$. Every real number works, so the domain is $(-\\infty, \\infty)$.`,
+      lesson: 'composition',
+    };
+  }
+
+  // 3. Composition of a quadratic and a line
+  function q2_comppoly() {
+    const a = ri(2, 5), b = nz(-6, 6), c = nz(-9, 9), m = pick([-3, -2, 2, 3, 4]), k = nz(-7, 7);
+    const gf = Math.random() < 0.65;
+    const fT = polyArr([a, b, c]), gT = poly([[m, 'x'], [k, '']]);
+    const P = arr => `$${polyArr(arr)}$`;
+    const gof = [m * a, m * b, m * c + k];
+    const fog = [a * m * m, 2 * a * m * k + b * m, a * k * k + b * k + c];
+    return {
+      prompt: `For the given functions $f$ and $g$, find the indicated composition.<span class="bexpr">$f(x) = ${fT},\\quad g(x) = ${gT},\\quad ${gf ? '(g \\circ f)(x)' : '(f \\circ g)(x)'}$</span>`,
+      choices: gf
+        ? [P(gof), P([m * a, m * b, m * c - k]), P([a, b, c + k]), P([a, m * b, m * c + k])]
+        : [P(fog), P(gof), P([a * m * m, b * m, a * k * k + b * k + c]), P([a * m, 2 * a * m * k + b * m, a * k * k + b * k + c])],
+      why: gf
+        ? `$(g \\circ f)(x) = g(f(x)) = ${m}(${fT}) ${k > 0 ? '+' : '-'} ${Math.abs(k)} = ${polyArr(gof)}$.`
+        : `$(f \\circ g)(x) = f(g(x)) = ${a}(${gT})^2 ${b > 0 ? '+' : '-'} ${Math.abs(b)}(${gT}) ${c > 0 ? '+' : '-'} ${Math.abs(c)}$. Expand the square first: $(${gT})^2 = ${polyArr([m * m, 2 * m * k, k * k])}$. Result: $${polyArr(fog)}$.`,
+      lesson: 'composition',
+    };
+  }
+
+  // 4. Domain of a rational function
+  function q2_ratdomain() {
+    const c = ri(2, 9), k = nz(-9, 9);
+    const forms = [
+      [`\\dfrac{${k}x}{x^2 + ${c * c}}`, 2, `$x^2 + ${c * c}$ is always positive, so the denominator is never $0$.`],
+      [`\\dfrac{${k}x}{x^2 - ${c * c}}`, 0, `$x^2 - ${c * c} = 0$ when $x = \\pm ${c}$, so exclude both.`],
+      [`\\dfrac{${k}}{x - ${c}}`, 1, `The denominator is $0$ only at $x = ${c}$.`],
+      [`\\dfrac{${k}x + 1}{x}`, 3, 'The denominator is $0$ only at $x = 0$.'],
+    ];
+    const [f, ans, why] = pick(forms);
+    return {
+      prompt: `Write the domain in interval notation.<span class="bexpr">$f(x) = ${f}$</span>`,
+      choices: [
+        `$(-\\infty, -${c}) \\cup (-${c}, ${c}) \\cup (${c}, \\infty)$`,
+        `$(-\\infty, ${c}) \\cup (${c}, \\infty)$`,
+        '$(-\\infty, \\infty)$',
+        '$(-\\infty, 0) \\cup (0, \\infty)$',
+      ], answer: ans, fixed: true,
+      why: `${why} A rational function is defined everywhere except where its denominator is zero.`,
+      lesson: 'functions',
+    };
+  }
+
+  // 5. End behavior
+  function q2_endbehavior() {
+    const n = ri(2, 7), a = nz(-6, 6);
+    const coeffs = [a]; for (let i = 0; i < n; i++) coeffs.push(ri(-6, 6));
+    if (coeffs[n] === 0) coeffs[n] = nz(-6, 6);
+    const even = n % 2 === 0;
+    const ans = even ? (a > 0 ? 2 : 3) : (a > 0 ? 1 : 0);
+    return {
+      prompt: `Determine the end behavior of the polynomial function.<span class="bexpr">$f(x) = ${polyArr(coeffs)}$</span>`,
+      choices: ['rises to the left and falls to the right', 'falls to the left and rises to the right', 'rises to the left and rises to the right', 'falls to the left and falls to the right'],
+      answer: ans, fixed: true,
+      why: `Only the leading term $${coef(a)}x^${n}$ matters. The degree ${n} is ${even ? 'even, so both ends go the same way' : 'odd, so the ends go opposite ways'}, and the leading coefficient is ${a > 0 ? 'positive' : 'negative'}, so the right end ${a > 0 ? 'rises' : 'falls'}.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 6. Evaluate a composition at a number
+  function q2_compvalue() {
+    const p = nz(-6, 6), q = pick([-3, -2, 2, 3, 4]), r = nz(-5, 5), c = nz(-4, 4);
+    const f = x => x * x + p * x, g = x => q * x + r;
+    const v = f(g(c));
+    const pool = [-v, g(f(c)), f(c) * g(c), f(c) + g(c), v + 2 * p].filter(x => x !== v);
+    const others = [...new Set(pool)].slice(0, 3);
+    const fmt = n => `$(f \\circ g)(${c}) = ${n}$`;
+    return {
+      prompt: `Evaluate the function for the given value of $x$.<span class="bexpr">$f(x) = ${poly([[1, 'x^2'], [p, 'x']])},\\quad g(x) = ${poly([[q, 'x'], [r, '']])},\\quad (f \\circ g)(${c}) = \\,?$</span>`,
+      choices: [fmt(v), ...others.map(fmt)],
+      why: `Work inside out. $g(${c}) = ${g(c)}$. Then $f(${g(c)}) = (${g(c)})^2 ${p > 0 ? '+' : '-'} ${Math.abs(p)}(${g(c)}) = ${v}$.`,
+      lesson: 'composition',
+    };
+  }
+
+  // 7. Factor a cubic given one zero
+  function q2_factorzero() {
+    let z, a, b, d;
+    do { z = pick([-5, -4, -3, -2, 2, 3, 4, 5]); a = pick([2, 3, 4]); b = nz(-7, 7); d = nz(-9, 9); }
+    while (gcd(a, b) !== 1 || d === -z || b === -a * z || Math.abs(b) === Math.abs(a * d));
+    const quad = [a, a * d + b, b * d];
+    const cubic = mul([1, -z], quad);
+    const L = (A, B) => `(${poly([[A, 'x'], [B, '']])})`;
+    return {
+      prompt: `Factor $f(x) = ${polyArr(cubic)}$ given that $${z}$ is a zero.`,
+      choices: [
+        `$${xm(z)}${L(a, b)}${L(1, d)}$`,
+        `$${xm(-z)}${L(a, -b)}${L(1, d)}$`,
+        `$${xm(z)}(${polyArr([a, a * d - b, -b * d])})$`,
+        `$${xm(-z)}(${polyArr(quad)})$`,
+      ],
+      why: `A zero of $${z}$ means $${xm(z)}$ is a factor. Synthetic division by $${z}$ leaves $${polyArr(quad)}$, which factors as $${L(a, b)}${L(1, d)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 8. All zeros of a cubic with complex zeros
+  function q2_complexzeros() {
+    const r = nz(-6, 6), al = nz(-3, 3), be = ri(1, 5);
+    const quad = [1, -2 * al, al * al + be * be];
+    const cubic = mul([1, -r], quad);
+    const ch = (x, a) => `$${x},\\ ${cx(a, be)}$`;
+    return {
+      prompt: `Find all the zeros.<span class="bexpr">$f(x) = ${polyArr(cubic)}$</span>`,
+      choices: [ch(r, al), ch(-r, al), ch(-r, -al), ch(r, -al)],
+      why: `Test the rational candidates: $f(${r}) = 0$, so $${xm(r)}$ is a factor. Dividing leaves $${polyArr(quad)}$. The quadratic formula gives $x = \\dfrac{${2 * al} \\pm \\sqrt{${4 * al * al} - ${4 * (al * al + be * be)}}}{2} = ${cx(al, be)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 9. Degree-5 polynomial with two given zeros
+  function q2_solvegiven() {
+    let p, r1, r2, al, be;
+    do { p = pick([-5, -3, -1, 1, 3, 5]); r1 = nz(-4, 4); r2 = nz(-4, 4); al = nz(-3, 3); be = ri(1, 4); } while (r1 === r2 || Math.abs(r1) === Math.abs(r2));
+    const f = mul(mul(mul([2, -p], [1, -r1]), [1, -r2]), [1, -2 * al, al * al + be * be]);
+    const reals = [r1, r2].sort((x, y) => x - y);
+    const half = frac(p, 2);
+    const conj = `${al} - ${be === 1 ? '' : be}i`;
+    return {
+      prompt: `A polynomial $f(x)$ and two of its zeros are given. Solve $f(x) = 0$.<span class="bexpr">$f(x) = ${polyArr(f)}$; $\\ ${conj}$ and $${half}$ are zeros</span>`,
+      choices: [
+        `$${setTex([...reals, half, cx(al, be)])}$`,
+        `$${setTex([reals[0], `\\pm ${frac(Math.abs(p), 2)}`, cx(al, be)])}$`,
+        `$${setTex([...reals, frac(-p, 2), cx(al, be)])}$`,
+        `$${setTex([...reals, half, `\\pm ${Math.abs(al)} - ${be === 1 ? '' : be}i`])}$`,
+      ],
+      why: `Complex zeros come in conjugate pairs, so $${cx(al, be)}$ are both zeros, giving the factor $${polyArr([1, -2 * al, al * al + be * be])}$. The zero $${half}$ gives the factor $${p < 0 ? `(2x + ${-p})` : `(2x - ${p})`}$. Dividing $f$ by both leaves $${polyArr(mul([1, -r1], [1, -r2]))} = ${xm(r1)}${xm(r2)}$, so the other zeros are $${r1}$ and $${r2}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 10. Inverse of a x^n + b
+  function q2_inverse() {
+    const n = pick([3, 3, 5]), a = ri(2, 9), b = nz(-9, 9);
+    const minus = poly([[1, 'x'], [-b, '']]), plus = poly([[1, 'x'], [b, '']]);
+    return {
+      prompt: `A one-to-one function is given. Write an expression for the inverse function.<span class="bexpr">$m(x) = ${poly([[a, `x^${n}`], [b, '']])}$</span>`,
+      choices: [
+        `$m^{-1}(x) = \\sqrt[${n}]{\\dfrac{${minus}}{${a}}}$`,
+        `$m^{-1}(x) = \\sqrt[${n}]{\\dfrac{${plus}}{${a}}}$`,
+        `$m^{-1}(x) = \\dfrac{${minus}}{${a}}$`,
+        `$m^{-1}(x) = \\left(\\dfrac{${plus}}{${a}}\\right)^${n}$`,
+      ],
+      why: `Swap and solve: $x = ${a}y^${n} ${b > 0 ? '+' : '-'} ${Math.abs(b)}$. Undo the constant: $${minus} = ${a}y^${n}$. Undo the ${a}: $y^${n} = \\dfrac{${minus}}{${a}}$. Undo the power with a ${n === 3 ? 'cube' : 'fifth'} root.`,
+      lesson: 'composition',
+    };
+  }
+
+  // 11. Horizontal asymptote and where the graph crosses it
+  function q2_hacross() {
+    const x0 = nz(-6, 6);
+    if (Math.random() < 0.55) {
+      let a, e, g;
+      do { a = pick([-4, -3, -2, 2, 3, 4, 5]); e = nz(-9, 9); g = nz(-9, 9); } while (x0 * x0 + e * x0 + g === 0);
+      const ab = (A, B) => `a. ${A}<br>b. ${B}`;
+      return {
+        prompt: `(a) Identify the horizontal asymptote (if any). (b) If the graph has a horizontal asymptote, find the point where the graph crosses it.<span class="bexpr">$s(x) = \\dfrac{${poly([[a, 'x'], [-a * x0, '']])}}{${polyArr([1, e, g])}}$</span>`,
+        choices: [
+          ab('$y = 0$', `$(${x0}, 0)$`),
+          ab(`$y = ${x0}$`, `$(0, ${x0})$`),
+          ab('No horizontal asymptote', 'Not applicable'),
+          ab('$y = 0$', `$(${-x0}, 0)$`),
+        ],
+        why: `The numerator has lower degree, so the horizontal asymptote is $y = 0$. The graph crosses it where $s(x) = 0$, which is where the numerator is $0$: $${poly([[a, 'x'], [-a * x0, '']])} = 0 \\Rightarrow x = ${x0}$.`,
+        lesson: 'polynomial-rational',
+      };
+    }
+    let a, b, e, g;
+    do { a = pick([2, 3, 4, -2, -3]); b = nz(-9, 9); e = nz(-6, 6); g = nz(-9, 9); } while (b === a * e || x0 * x0 + e * x0 + g === 0);
+    const c = a * g - (b - a * e) * x0;
+    const ab = (A, B) => `a. ${A}<br>b. ${B}`;
+    return {
+      prompt: `(a) Identify the horizontal asymptote (if any). (b) If the graph has a horizontal asymptote, find the point where the graph crosses it.<span class="bexpr">$s(x) = \\dfrac{${polyArr([a, b, c])}}{${polyArr([1, e, g])}}$</span>`,
+      choices: [
+        ab(`$y = ${a}$`, `$(${x0}, ${a})$`),
+        ab('$y = 0$', `$(${x0}, 0)$`),
+        ab('No horizontal asymptote', 'Not applicable'),
+        ab(`$y = ${a}$`, `$(${-x0}, ${a})$`),
+      ],
+      why: `Equal degrees: $y = \\dfrac{${a}}{1} = ${a}$. Set $s(x) = ${a}$ and cross-multiply: $${polyArr([a, b, c])} = ${a}(${polyArr([1, e, g])})$. The $x^2$ terms cancel, leaving $${b - a * e}x = ${a * g - c}$, so $x = ${x0}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 12. Intermediate value theorem
+  function q2_ivt() {
+    const want = Math.random() < 0.5;
+    for (let tries = 0; tries < 400; tries++) {
+      const co = [pick([-3, -2, -1, 1, 2, 3]), ri(-8, 8), ri(-9, 9), ri(-25, 25)];
+      const m = ri(-3, 3);
+      const fa = evalPoly(co, m), fb = evalPoly(co, m + 1);
+      if (fa === 0 || fb === 0) continue;
+      const yes = (fa < 0) !== (fb < 0);
+      if (yes !== want) continue;
+      return {
+        prompt: `Determine whether the intermediate value theorem guarantees that the function has a zero on the given interval.<span class="bexpr">$f(x) = ${polyArr(co)};\\quad [${m}, ${m + 1}]$</span>`,
+        choices: ['No', 'Yes'], answer: yes ? 1 : 0, fixed: true,
+        why: `$f(${m}) = ${fa}$ and $f(${m + 1}) = ${fb}$. ${yes ? 'The signs are opposite, so a polynomial (which is continuous) must cross $0$ in between: yes.' : 'Both have the same sign, so the theorem gives no guarantee: no.'}`,
+        lesson: 'polynomial-rational',
+      };
+    }
+    return q2_ivt();
+  }
+
+  // 13. One-to-one from a graph
+  function q2_onetoone() {
+    const yes = Math.random() < 0.5;
+    const spec = yes ? pick([
+      { pieces: [{ f: x => x * x * x / 8 + x / 2, from: -3.4, to: 3.4, arrowStart: true, arrowEnd: true }] },
+      { pieces: [{ f: x => Math.pow(2, x) - 3, from: -5.6, to: 3.1, arrowStart: true, arrowEnd: true }] },
+      { pieces: [{ f: x => -0.6 * x + 1, from: -5.6, to: 5.6, arrowStart: true, arrowEnd: true }] },
+    ]) : pick([
+      { pieces: [{ f: x => 4 * x / (1 + x * x) + 0.3, from: -5.6, to: 5.6 }] },
+      { pieces: [{ f: x => 0.5 * (x - 1) * (x - 1) - 3, from: -2.4, to: 4.4, arrowStart: true, arrowEnd: true }] },
+      { pieces: [{ f: x => Math.abs(x + 1) - 2, from: -5.6, to: 3.6, arrowStart: true, arrowEnd: true }] },
+    ]);
+    return {
+      prompt: 'Determine if the relation defines $y$ as a one-to-one function of $x$.',
+      graph: spec,
+      choices: ['No', 'Yes'], answer: yes ? 1 : 0, fixed: true,
+      why: yes
+        ? 'It passes the vertical line test (a function) and the horizontal line test: no horizontal line hits it twice. So it is one-to-one.'
+        : 'Some horizontal line crosses the graph twice, so two different $x$-values share a $y$-value. It fails the horizontal line test: not one-to-one.',
+      lesson: 'composition',
+    };
+  }
+
+  // 14. Possible rational zeros
+  function q2_rationalzeros() {
+    const L = pick([1, 1, 2]), C = pick([4, 6, 8, 9, 10, 12, 15]);
+    const facs = n => { const r = []; for (let i = 1; i <= n; i++) if (n % i === 0) r.push(i); return r; };
+    const vals = new Map();
+    facs(C).forEach(p => facs(L).forEach(q => { vals.set(p / q, frac(p, q)); }));
+    const list = [...vals.entries()].sort((x, y) => x[0] - y[0]).map(e => e[1]);
+    const recips = facs(C).map(q => frac(1, q));
+    const f = polyArr([L, ri(-6, 6), ri(-6, 6), ri(-6, 6), C]);
+    return {
+      prompt: `List the possible rational zeros.<span class="bexpr">$f(x) = ${f}$</span>`,
+      choices: [
+        `$${list.map(t => '\\pm ' + t).join(',\\ ')}$`,
+        `$${list.join(',\\ ')}$`,
+        `$${list.map(t => '-' + t).join(',\\ ')}$`,
+        `$${recips.map(t => '\\pm ' + t).join(',\\ ')}$`,
+      ],
+      why: `Candidates are $\\pm\\dfrac{\\text{factors of } ${C}}{\\text{factors of } ${L}}$. Factors of ${C}: ${facs(C).join(', ')}. Factors of ${L}: ${facs(L).join(', ')}. Both signs are always included.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 15. Long division
+  function q2_longdiv() {
+    const p = pick([2, 3, 4]), q = nz(-5, 5), a = pick([2, 3, 4]), b = nz(-5, 5), c = nz(-5, 5);
+    const div = mul([p, q], [a, b, c]);
+    const P = arr => `$${polyArr(arr)}$`;
+    return {
+      prompt: `Divide using long division.<span class="bexpr">$(${polyArr(div)}) \\div (${poly([[p, 'x'], [q, '']])})$</span>`,
+      choices: [P([a, b, c]), P([a, -b, c]), P([a, 0, c]), P([a, b, -c])],
+      why: `$${div[0]}x^3 \\div ${p}x = ${a}x^2$. Multiply and subtract, bring down the next term, and repeat: the next quotient terms are $${poly([[b, 'x']])}$ and $${c}$, with remainder $0$. Check: $(${poly([[p, 'x'], [q, '']])})(${polyArr([a, b, c])}) = ${polyArr(div)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 16. Quadratic inequality
+  function q2_quadineq() {
+    let r1, r2;
+    do { r1 = nz(-9, 9); r2 = nz(-9, 9); } while (r1 >= r2 || r1 === -r2);
+    const s = sgn();
+    const op = pick(['\\le', '\\ge', '<', '>']);
+    const strict = op === '<' || op === '>';
+    const wantPos = op === '\\ge' || op === '>';
+    const outside = wantPos === (s > 0);
+    const L = strict ? '(' : '[', Rb = strict ? ')' : ']';
+    const out = (x, y) => `(-\\infty, ${x}${Rb} \\cup ${L}${y}, \\infty)`;
+    const btw = (x, y) => `${L}${x}, ${y}${Rb}`;
+    const ans = outside ? out(r1, r2) : btw(r1, r2);
+    const other = outside ? btw(r1, r2) : out(r1, r2);
+    const neg = outside ? out(-r2, -r1) : btw(-r2, -r1);
+    return {
+      prompt: `Solve the inequality. Write the solution set in interval notation.<span class="bexpr">$${polyArr([s, -s * (r1 + r2), s * r1 * r2])} ${op} 0$</span>`,
+      choices: [`$${ans}$`, `$${other}$`, `$${neg}$`, '$(-\\infty, \\infty)$'],
+      why: `Factor: $${s < 0 ? '-' : ''}${xm(r1)}${xm(r2)} ${op} 0$. The zeros $${r1}$ and $${r2}$ split the line. ${s < 0 ? 'Because the leading coefficient is negative, the expression is negative outside the zeros and positive between them.' : 'The expression is positive outside the zeros and negative between them.'} So the solution is $${ans}$${strict ? '' : ', with endpoints included'}.`,
+      lesson: 'equations',
+    };
+  }
+
+  // 17. Rational inequality with x^2 / (x^2 + k^2)
+  function q2_ratineq() {
+    const k = ri(2, 12);
+    const ops = [['\\ge', 2, 'The fraction is never negative, so every real number works.'],
+      ['>', 1, 'The fraction is positive everywhere except $x = 0$, where it equals $0$.'],
+      ['\\le', 3, 'The fraction is never negative, so it is $\\le 0$ only when it equals $0$, at $x = 0$.'],
+      ['<', 4, 'The fraction is never negative, so there is no solution.']];
+    const [op, ans, why] = pick(ops);
+    return {
+      prompt: `Solve the inequality. Write the solution set in interval notation.<span class="bexpr">$\\dfrac{x^2}{x^2 + ${k * k}} ${op} 0$</span>`,
+      choices: [`$(-\\infty, -${k}] \\cup [${k}, \\infty)$`, '$(-\\infty, 0) \\cup (0, \\infty)$', '$(-\\infty, \\infty)$', '$\\{0\\}$', 'No solution'],
+      answer: ans, fixed: true,
+      why: `The denominator $x^2 + ${k * k}$ is always positive and the numerator $x^2$ is never negative. ${why}`,
+      lesson: 'equations',
+    };
+  }
+
+  // 18. Synthetic division
+  function q2_synthetic() {
+    let c, Q, R;
+    do { c = nz(-5, 5); Q = [1, nz(-7, 7), nz(-9, 9), nz(-9, 9)]; R = nz(-12, 12); } while (false);
+    const dividend = mul(Q, [1, -c]); dividend[dividend.length - 1] += R;
+    const den = x => `s ${x > 0 ? '-' : '+'} ${Math.abs(x)}`;
+    const rem = (r, d) => (r === 0 ? '' : ` ${r > 0 ? '+' : '-'} \\dfrac{${Math.abs(r)}}{${den(d)}}`);
+    const wrong = synth(dividend, -c);
+    const tail = poly([[Q[3], 's'], [R, '']]);
+    return {
+      prompt: `Use synthetic division to divide the polynomials.<span class="bexpr">$(${polyArr(dividend, 's')}) \\div (${den(c)})$</span>`,
+      choices: [
+        `$${polyArr(Q, 's')}${rem(R, c)}$`,
+        `$${polyArr(Q, 's')}$`,
+        `$${polyArr([1, Q[1], Q[2], 0], 's')} + \\dfrac{${tail}}{${den(c)}}$`,
+        `$${polyArr(wrong.q, 's')}${rem(wrong.rem, -c)}$`,
+      ],
+      why: `Divide by $${den(c)}$, so use $${c}$ in the synthetic division box (the opposite sign of the number in the divisor). The bottom row gives quotient $${polyArr(Q, 's')}$ and remainder $${R}$, written as $\\dfrac{${R}}{${den(c)}}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 19. Vertical asymptotes
+  function q2_vasym() {
+    const k = ri(2, 9);
+    const forms = [
+      [`\\dfrac{x}{x^2 + ${k * k}}`, 0, `$x^2 + ${k * k}$ is never $0$, so there are no vertical asymptotes.`],
+      [`\\dfrac{x}{x^2 - ${k * k}}`, 3, `$x^2 - ${k * k} = 0$ at $x = \\pm ${k}$, and the numerator is not $0$ there.`],
+      [`\\dfrac{${k + 1}}{x - ${k}}`, 2, `The denominator is $0$ only at $x = ${k}$.`],
+      [`\\dfrac{x + 1}{x^2 - ${k}x}`, 1, `$x^2 - ${k}x = x(x - ${k})$ is $0$ at $x = 0$ and $x = ${k}$.`],
+    ];
+    const [f, ans, why] = pick(forms);
+    return {
+      prompt: `Determine the vertical asymptote(s) of the graph of the function.<span class="bexpr">$f(x) = ${f}$</span>`,
+      choices: ['None', `$x = ${k}$ and $x = 0$`, `$x = ${k}$`, `$x = ${k}$ and $x = -${k}$`],
+      answer: ans, fixed: true,
+      why: `Vertical asymptotes sit where the denominator is $0$ (after cancelling common factors). ${why}`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 20. Polynomial from zeros
+  function q2_fromzeros() {
+    let z;
+    do { z = [nz(-6, 9), nz(-6, 9), nz(-6, 9)]; } while (new Set(z).size < 3);
+    z.sort((a, b) => a - b);
+    const S = z[0] + z[1] + z[2], Pr = z[0] * z[1] + z[0] * z[2] + z[1] * z[2], T = z[0] * z[1] * z[2];
+    const pw = Pr - 2 * S || Pr + 4;
+    const P = arr => `$f(x) = ${polyArr(arr)}$`;
+    return {
+      prompt: `Write a polynomial $f(x)$ that meets the given conditions.<span class="bexpr">Degree 3 polynomial with zeros $${z[0]}$, $${z[1]}$, and $${z[2]}$</span>`,
+      choices: [P([1, -S, Pr, -T]), P([1, S, Pr, T]), P([1, -S, pw, -T]), P([1, S, pw, T])],
+      why: `Each zero $c$ gives a factor $(x - c)$: $f(x) = ${z.map(v => xm(v)).join('')}$. Multiply out: $${polyArr([1, -S, Pr, -T])}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+
+  // 21. Zeros and multiplicities
+  function q2_multiplicity() {
+    let m, n, k, a, p, q;
+    do { m = ri(2, 7); n = ri(2, 7); k = ri(2, 7); a = ri(2, 9); p = nz(-9, 9); q = nz(-9, 9); } while (p === -q || p === q);
+    const zs = (list) => list.map(([v, mu]) => `$${v}$ (multiplicity ${mu})`).join(', ');
+    return {
+      prompt: `Find the zeros of the function and state the multiplicities.<span class="bexpr">$f(x) = ${a}x^${m}${xm(p)}^${n}${xm(-q)}^${k}$</span>`,
+      choices: [
+        zs([[0, m], [p, n], [-q, k]]),
+        zs([[p, n], [-q, k]]),
+        zs([[-p, n], [q, k]]),
+        zs([[0, m], [-p, n], [q, k]]),
+      ],
+      why: `Set each factor to zero. $x^${m}$ gives $0$ with multiplicity ${m}. $${xm(p)}^${n}$ gives $${p}$ with multiplicity ${n}. $${xm(-q)}^${k}$ gives $${-q}$ with multiplicity ${k}. The constant ${a} is not a zero.`,
+      lesson: 'polynomial-rational', points: 5.75,
+    };
+  }
+
+  function buildBlitz2() {
+    const gens = [q2_asym, q2_compdomain, q2_comppoly, q2_ratdomain, q2_endbehavior, q2_compvalue, q2_factorzero,
+      q2_complexzeros, q2_solvegiven, q2_inverse, q2_hacross, q2_ivt, q2_onetoone, q2_rationalzeros, q2_longdiv,
+      q2_quadineq, q2_ratineq, q2_synthetic, q2_vasym, q2_fromzeros, q2_multiplicity];
+    return gens.map((gen, i) => {
+      const q = build(gen);
+      q.points = q.points || (i === 10 ? 4 : 4.75);
+      if (q.answer == null) q.answer = 0;
+      return q;
+    });
+  }
+
   /* ============================================================ registry */
   const BLITZES = [
     {
       id: '1', title: 'Blitz 1', topic: 'Factoring, functions, and graphs', ready: true, build: buildBlitz1,
       covers: 'factoring, rationalizing, evaluating functions, even and odd, transformations, domain and range, piecewise functions, combining functions, intercepts, reading graphs, extrema, and symmetry',
     },
-    { id: '2', title: 'Blitz 2', topic: 'Coming soon', ready: false },
+    {
+      id: '2', title: 'Blitz 2', topic: 'Polynomial and rational functions', ready: true, build: buildBlitz2,
+      covers: 'composition and inverses, end behavior, dividing polynomials, finding real and complex zeros, the rational zero test, the intermediate value theorem, asymptotes, and polynomial and rational inequalities',
+    },
     { id: '3', title: 'Blitz 3', topic: 'Coming soon', ready: false },
   ];
 
@@ -726,6 +1195,11 @@
     product: q_product, fxh: q_fxh, difference: q_difference, intercepts: q_intercepts, incdec: q_incdec,
     piecegraph: q_piecegraph, recipgraph: q_recipgraph, readgraph: q_readgraph, reflect: q_reflect,
     extrema: q_extrema, shrink: q_shrink, symmetry: q_symmetry,
+    asym2: q2_asym, compdomain: q2_compdomain, comppoly: q2_comppoly, ratdomain: q2_ratdomain, endbehavior: q2_endbehavior,
+    compvalue: q2_compvalue, factorzero: q2_factorzero, complexzeros: q2_complexzeros, solvegiven: q2_solvegiven,
+    inverse: q2_inverse, hacross: q2_hacross, ivt: q2_ivt, onetoone: q2_onetoone, rationalzeros: q2_rationalzeros,
+    longdiv: q2_longdiv, quadineq: q2_quadineq, ratineq: q2_ratineq, synthetic: q2_synthetic, vasym: q2_vasym,
+    fromzeros: q2_fromzeros, multiplicity: q2_multiplicity,
   };
   function practice(host, keys, renderMath) {
     const box = h('div', { class: 'practice' });

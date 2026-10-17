@@ -8,7 +8,7 @@ A web app that teaches college-level pre-calculus in 15 short lessons:
 
 Each lesson has a short explanation, worked examples revealed one step at a time, a list of things to remember, and a three-question check. Several lessons include interactive graphs (transformations, exponential/log, sine and cosine, and a draggable unit circle). There is also a printable formula sheet and a 15-question final check.
 
-**Blitz sessions** are full practice quizzes that mirror a class quiz (Blitz 1 mirrors the Quiz 1 review: 21 questions, 100 points, no feedback until you submit). Every question is generated from random values, so each attempt is a new version.
+**Blitz sessions** are full practice quizzes that mirror a class quiz (Blitz 1 and Blitz 2 mirror the Quiz 1 and Quiz 2 reviews: 21 questions, 100 points, no feedback until you submit). Each Blitz has a prep plan with study sessions and practice questions. Every question is generated from random values, so each attempt is a new version.
 
 Progress is saved in the browser (localStorage), so no account or backend is needed.
 

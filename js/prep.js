@@ -296,6 +296,269 @@
         },
       ],
     },
+    '2': {
+      blitz: '2',
+      title: 'Blitz 2 prep plan',
+      lede: 'Seven sessions that cover every question type on Blitz 2: composition and inverses, polynomial behavior, division, zeros, rational functions, and inequalities. Read the method, check the example, then practice until you get two in a row right.',
+      sessions: [
+        {
+          title: 'Composition and inverses',
+          minutes: 30,
+          goal: 'Chain functions together and undo them.',
+          topics: [
+            {
+              title: 'Composing functions', qs: [2, 3, 6], gens: ['compdomain', 'comppoly', 'compvalue'], lesson: 'composition',
+              method: [
+                R`$(f \circ g)(x) = f(g(x))$: the function on the <strong>right</strong> goes in first.`,
+                R`Replace every $x$ in the outer function with the whole inner function, in parentheses.`,
+                R`For a number, work inside out: find $g(c)$, then plug that result into $f$.`,
+                R`Absolute value, polynomial, and linear functions have domain $(-\infty, \infty)$, so their compositions do too.`,
+              ],
+              example: {
+                problem: R`$f(x) = 4x^2 + 2x + 7$ and $g(x) = 2x - 3$. Find $(g \circ f)(x)$.`,
+                steps: [
+                  R`$g(f(x)) = 2(4x^2 + 2x + 7) - 3$.`,
+                  R`Distribute: $8x^2 + 4x + 14 - 3$.`,
+                  R`$= 8x^2 + 4x + 11$.`,
+                ],
+              },
+              trap: R`Doing the composition in the wrong order. $(g \circ f)$ and $(f \circ g)$ are different, and both versions show up in the answer choices.`,
+            },
+            {
+              title: 'One-to-one functions and inverses', qs: [10, 13], gens: ['inverse', 'onetoone'], lesson: 'composition',
+              method: [
+                R`One-to-one: every horizontal line hits the graph at most once (horizontal line test).`,
+                R`To find an inverse: write $y = m(x)$, swap $x$ and $y$, then solve for $y$.`,
+                R`Undo operations in reverse order: subtract the constant, divide by the coefficient, then take the root.`,
+              ],
+              example: {
+                problem: R`Find the inverse of $m(x) = 7x^3 + 2$.`,
+                steps: [
+                  R`Swap: $x = 7y^3 + 2$.`,
+                  R`Subtract 2: $x - 2 = 7y^3$.`,
+                  R`Divide by 7: $y^3 = \dfrac{x - 2}{7}$.`,
+                  R`Cube root: $m^{-1}(x) = \sqrt[3]{\dfrac{x - 2}{7}}$.`,
+                ],
+              },
+              trap: R`Writing $x + 2$ instead of $x - 2$, or forgetting the root. Each wrong choice skips or flips one step.`,
+            },
+          ],
+        },
+        {
+          title: 'Polynomial behavior',
+          minutes: 25,
+          goal: 'Read end behavior, zeros, and multiplicities straight from the formula.',
+          topics: [
+            {
+              title: 'End behavior', qs: [5], gens: ['endbehavior'], lesson: 'polynomial-rational',
+              method: [
+                R`Look only at the leading term $ax^n$.`,
+                R`Even degree: both ends match. Up if $a > 0$, down if $a < 0$.`,
+                R`Odd degree: ends are opposite. $a > 0$: falls left, rises right. $a < 0$: rises left, falls right.`,
+              ],
+              trap: R`Using the first term that is written instead of the highest power. Find the biggest exponent first.`,
+            },
+            {
+              title: 'Zeros, multiplicities, and building a polynomial', qs: [20, 21], gens: ['multiplicity', 'fromzeros'], lesson: 'polynomial-rational',
+              method: [
+                R`Factor $(x - c)^m$ gives zero $c$ with multiplicity $m$. Note the sign flips: $(x + 9)$ gives $-9$.`,
+                R`A factor $x^m$ is the zero $0$ with multiplicity $m$. A constant in front is not a zero.`,
+                R`To build a polynomial from zeros, write $(x - c)$ for each zero and multiply out.`,
+              ],
+              example: {
+                problem: R`Write a degree 3 polynomial with zeros 1, 5, and 6.`,
+                steps: [
+                  R`$f(x) = (x - 1)(x - 5)(x - 6)$.`,
+                  R`$(x - 1)(x - 5) = x^2 - 6x + 5$.`,
+                  R`$(x^2 - 6x + 5)(x - 6) = x^3 - 12x^2 + 41x - 30$.`,
+                ],
+              },
+              trap: R`Forgetting the zero at $x = 0$ that comes from a factor like $5x^6$.`,
+            },
+            {
+              title: 'Intermediate value theorem', qs: [12], gens: ['ivt'], lesson: 'polynomial-rational',
+              method: [
+                R`Evaluate $f$ at both endpoints of the interval.`,
+                R`Opposite signs: a polynomial must cross zero in between, so yes.`,
+                R`Same sign: the theorem does not guarantee a zero, so no.`,
+              ],
+              trap: R`Arithmetic slips with negatives cubed. $(-2)^3 = -8$, and $-5(-2) = +10$.`,
+            },
+          ],
+        },
+        {
+          title: 'Dividing polynomials',
+          minutes: 25,
+          goal: 'Divide by a linear factor with long division and synthetic division.',
+          topics: [
+            {
+              title: 'Long division', qs: [15], gens: ['longdiv'], lesson: 'polynomial-rational',
+              method: [
+                R`Divide the leading term by the divisor's leading term. Write it on top.`,
+                R`Multiply the whole divisor by it, subtract, and bring down the next term.`,
+                R`Repeat until the remainder has lower degree than the divisor.`,
+              ],
+              example: {
+                problem: R`$(12x^3 + 7x^2 - 2x + 10) \div (4x + 5)$.`,
+                steps: [
+                  R`$12x^3 \div 4x = 3x^2$. Subtract $3x^2(4x + 5) = 12x^3 + 15x^2$: left with $-8x^2 - 2x$.`,
+                  R`$-8x^2 \div 4x = -2x$. Subtract $-2x(4x + 5) = -8x^2 - 10x$: left with $8x + 10$.`,
+                  R`$8x \div 4x = 2$. Subtract $2(4x + 5)$: remainder $0$. Answer $3x^2 - 2x + 2$.`,
+                ],
+              },
+              trap: R`Subtracting only the first term. Subtract the entire product, and watch the sign of every term.`,
+            },
+            {
+              title: 'Synthetic division', qs: [18], gens: ['synthetic'], lesson: 'polynomial-rational',
+              method: [
+                R`Dividing by $(x - c)$: put $c$ in the box. For $(x + 4)$, use $-4$.`,
+                R`Write all coefficients, using $0$ for any missing power.`,
+                R`Bring down, multiply by $c$, add. Repeat across.`,
+                R`The last number is the remainder; write it as $\dfrac{\text{remainder}}{x - c}$.`,
+              ],
+              example: {
+                problem: R`$(s^4 - 2s^3 - 19s^2 + 26s + 32) \div (s + 4)$.`,
+                steps: [
+                  R`Box: $-4$. Coefficients: $1, -2, -19, 26, 32$.`,
+                  R`Bottom row: $1, -6, 5, 6, 8$.`,
+                  R`Answer: $s^3 - 6s^2 + 5s + 6 + \dfrac{8}{s + 4}$.`,
+                ],
+              },
+              trap: R`Using $+4$ in the box for $(s + 4)$. One answer choice is exactly that mistake.`,
+            },
+          ],
+        },
+        {
+          title: 'Finding zeros',
+          minutes: 35,
+          goal: 'Find every zero, rational and complex.',
+          topics: [
+            {
+              title: 'Possible rational zeros', qs: [14], gens: ['rationalzeros'], lesson: 'polynomial-rational',
+              method: [
+                R`List the factors $p$ of the constant term and the factors $q$ of the leading coefficient.`,
+                R`Possible rational zeros are $\pm\dfrac{p}{q}$. Always include both signs.`,
+              ],
+              trap: R`Dropping the $\pm$, or putting the constant's factors on the bottom.`,
+            },
+            {
+              title: 'Factoring with a known zero', qs: [7], gens: ['factorzero'], lesson: 'polynomial-rational',
+              method: [
+                R`A zero $c$ means $(x - c)$ is a factor. A zero of $-3$ gives $(x + 3)$.`,
+                R`Synthetic division by $c$ leaves a quadratic.`,
+                R`Factor the quadratic to finish.`,
+              ],
+              example: {
+                problem: R`Factor $4x^3 - 17x^2 - 111x - 72$ given that $-3$ is a zero.`,
+                steps: [
+                  R`Synthetic division by $-3$: bottom row $4, -29, -24, 0$.`,
+                  R`Quadratic: $4x^2 - 29x - 24 = (4x + 3)(x - 8)$.`,
+                  R`Answer: $(x + 3)(4x + 3)(x - 8)$.`,
+                ],
+              },
+              trap: R`Writing $(x - 3)$ for a zero of $-3$.`,
+            },
+            {
+              title: 'Complex zeros', qs: [8, 9], gens: ['complexzeros', 'solvegiven'], lesson: 'polynomial-rational',
+              method: [
+                R`Complex zeros come in conjugate pairs: if $a - bi$ is a zero, so is $a + bi$.`,
+                R`Their product is the quadratic $x^2 - 2ax + (a^2 + b^2)$. Divide it out.`,
+                R`A rational zero $\tfrac{p}{q}$ gives the factor $(qx - p)$. Divide it out too, then factor what is left.`,
+                R`For a cubic with no given zeros, test rational candidates, then use the quadratic formula on the rest.`,
+              ],
+              example: {
+                problem: R`Find all zeros of $x^3 + 3x^2 + 16x + 130$.`,
+                steps: [
+                  R`Test $x = -5$: $-125 + 75 - 80 + 130 = 0$. So $(x + 5)$ is a factor.`,
+                  R`Divide: $x^2 - 2x + 26$.`,
+                  R`Quadratic formula: $x = \dfrac{2 \pm \sqrt{4 - 104}}{2} = 1 \pm 5i$.`,
+                  R`Zeros: $-5,\ 1 \pm 5i$.`,
+                ],
+              },
+              trap: R`Flipping the sign of the real part of the complex zeros. $1 \pm 5i$ and $-1 \pm 5i$ are both offered.`,
+            },
+          ],
+        },
+        {
+          title: 'Rational functions',
+          minutes: 30,
+          goal: 'Find domain and every kind of asymptote.',
+          topics: [
+            {
+              title: 'Domain and vertical asymptotes', qs: [4, 19], gens: ['ratdomain', 'vasym'], lesson: 'polynomial-rational',
+              method: [
+                R`Set the denominator equal to $0$ and solve. Those $x$-values are excluded from the domain.`,
+                R`Vertical asymptotes are at those values (after cancelling any common factor).`,
+                R`$x^2 + k$ with $k > 0$ is never zero: no restriction and no vertical asymptote.`,
+              ],
+              trap: R`Solving $x^2 + 64 = 0$ as $x = \pm 8$. That is $x^2 - 64$. A sum of squares has no real zeros.`,
+            },
+            {
+              title: 'Horizontal and slant asymptotes', qs: [1, 11], gens: ['asym2', 'hacross'], lesson: 'polynomial-rational',
+              method: [
+                R`Compare degrees of top ($n$) and bottom ($d$).`,
+                R`$n < d$: $y = 0$. $\ n = d$: $y = $ ratio of leading coefficients. $\ n = d + 1$: slant asymptote, found by long division (ignore the remainder).`,
+                R`To find where the graph crosses a horizontal asymptote $y = L$, solve $f(x) = L$. For $y = 0$, that is where the numerator is $0$.`,
+              ],
+              example: {
+                problem: R`Find the slant asymptote of $\dfrac{4x^3 + 3x + 3}{2x^2 - 4x + 3}$.`,
+                steps: [
+                  R`$4x^3 \div 2x^2 = 2x$. Subtract $2x(2x^2 - 4x + 3) = 4x^3 - 8x^2 + 6x$: left with $8x^2 - 3x + 3$.`,
+                  R`$8x^2 \div 2x^2 = 4$. The quotient is $2x + 4$.`,
+                  R`Slant asymptote: $y = 2x + 4$.`,
+                ],
+              },
+              trap: R`Using the ratio of leading coefficients when the degrees are not equal.`,
+            },
+          ],
+        },
+        {
+          title: 'Inequalities',
+          minutes: 20,
+          goal: 'Solve polynomial and rational inequalities with a sign chart.',
+          topics: [
+            {
+              title: 'Quadratic inequalities', qs: [16], gens: ['quadineq'], lesson: 'equations',
+              method: [
+                R`If the leading coefficient is negative, multiply by $-1$ and flip the inequality.`,
+                R`Factor and find the zeros. They split the number line into three intervals.`,
+                R`Test one value per interval. Use brackets for $\le$ or $\ge$, parentheses for $<$ or $>$.`,
+              ],
+              example: {
+                problem: R`Solve $-x^2 - 12x - 32 \le 0$.`,
+                steps: [
+                  R`Multiply by $-1$ and flip: $x^2 + 12x + 32 \ge 0$.`,
+                  R`Factor: $(x + 8)(x + 4) \ge 0$. Zeros: $-8$ and $-4$.`,
+                  R`Positive outside the zeros: $(-\infty, -8] \cup [-4, \infty)$.`,
+                ],
+              },
+              trap: R`Forgetting to flip the sign when multiplying by $-1$, which swaps inside and outside.`,
+            },
+            {
+              title: 'Rational inequalities', qs: [17], gens: ['ratineq'], lesson: 'equations',
+              method: [
+                R`Find where the numerator is $0$ and where the denominator is $0$.`,
+                R`Check the sign of each piece. A square like $x^2$ is never negative; $x^2 + k$ is always positive.`,
+                R`$\ge 0$ includes the zeros; $> 0$ excludes them. If nothing works, the answer is no solution.`,
+              ],
+              trap: R`Treating $x^2 + 81$ as if it had zeros at $\pm 9$.`,
+            },
+          ],
+        },
+        {
+          title: 'Dress rehearsal',
+          minutes: 30,
+          goal: 'Take Blitz 2 under quiz conditions and close the gaps.',
+          rehearsal: true,
+          steps: [
+            R`Take Blitz 2 start to finish without notes. Let the timer run.`,
+            R`Read the explanation for every question you missed, even lucky guesses.`,
+            R`Go back to the session above that covers each miss and do two practice questions.`,
+            R`Retake Blitz 2. Every attempt has new numbers. You are ready when you score 90 or more twice in a row.`,
+          ],
+        },
+      ],
+    },
   };
 
   /* ------------------------------------------------------------ view */
