@@ -444,5 +444,8 @@
       }
     },
     unitCircle,
+    Plot,
+    tex,
+    fmt,
   };
 })();

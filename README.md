@@ -8,6 +8,8 @@ A web app that teaches college-level pre-calculus in 15 short lessons:
 
 Each lesson has a short explanation, worked examples revealed one step at a time, a list of things to remember, and a three-question check. Several lessons include interactive graphs (transformations, exponential/log, sine and cosine, and a draggable unit circle). There is also a printable formula sheet and a 15-question final check.
 
+**Blitz sessions** are full practice quizzes that mirror a class quiz (Blitz 1 mirrors the Quiz 1 review: 21 questions, 100 points, no feedback until you submit). Every question is generated from random values, so each attempt is a new version.
+
 Progress is saved in the browser (localStorage), so no account or backend is needed.
 
 ## Run it locally
@@ -33,8 +35,13 @@ index.html        page shell
 css/styles.css    all styles (light and dark themes)
 js/content.js     lesson text, examples, and quiz questions
 js/graphs.js      SVG graphs and interactive explorers
+js/blitz.js       Blitz practice quizzes (question generators + quiz view)
 js/app.js         routing, navigation, quizzes, progress
 netlify.toml      Netlify settings
 ```
 
 To add or edit a lesson, change `js/content.js`. Math is written in LaTeX between `$...$` and rendered with KaTeX.
+
+## Adding a Blitz
+
+In `js/blitz.js`, write a `buildBlitzN()` function that returns an array of question objects (see the Blitz 1 generators for the shape: `prompt`, optional `graph`, `choices`, `answer`, `why`, `lesson`, `points`), then set `ready: true`, a `topic`, `covers`, and `build` on that entry in `BLITZES`.

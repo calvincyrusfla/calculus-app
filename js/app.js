@@ -63,6 +63,16 @@
       sec.appendChild(ol);
       nav.appendChild(sec);
     });
+    const bl = h('section', { class: 'nav-part nav-extra nav-blitz' });
+    bl.appendChild(h('h2', null, '<a href="#/blitz">Blitz sessions</a>'));
+    bl.appendChild(h('ul', null, Blitz.list.map(b => {
+      const rec = progress.blitz && progress.blitz[b.id];
+      const act = activeId === 'blitz-' + b.id ? 'is-active' : '';
+      return b.ready
+        ? `<li class="${act}"><a href="#/blitz/${b.id}">${b.title}${rec ? `<span class="nav-score">${Math.round(rec.best)}</span>` : ''}</a></li>`
+        : `<li class="is-soon"><span>${b.title}<span class="nav-score">soon</span></span></li>`;
+    }).join('')));
+    nav.appendChild(bl);
     const extra = h('section', { class: 'nav-part nav-extra' });
     extra.appendChild(h('h2', null, 'Review'));
     extra.appendChild(h('ul', null,
@@ -142,6 +152,18 @@
         <li><h3>Check yourself</h3><p>Three questions with explanations. Answer them all to mark the lesson complete.</p></li>
       </ol>`;
     wrap.appendChild(how);
+
+    const blz = h('section', { class: 'home-blitz' });
+    blz.innerHTML = `<div><h2>Blitz sessions</h2><p>Full practice quizzes that mirror a real class quiz: 21 questions, 100 points, no hints until you submit, and new numbers every attempt.</p></div>`;
+    const blzList = h('div', { class: 'home-blitz-list' });
+    Blitz.list.forEach(b => {
+      const rec = progress.blitz && progress.blitz[b.id];
+      blzList.appendChild(b.ready
+        ? h('a', { class: 'blitz-pill', href: `#/blitz/${b.id}` }, `<strong>${b.title}</strong><span>${rec ? `Best ${Math.round(rec.best)} / 100` : b.topic}</span>`)
+        : h('div', { class: 'blitz-pill is-soon' }, `<strong>${b.title}</strong><span>Coming soon</span>`));
+    });
+    blz.appendChild(blzList);
+    wrap.appendChild(blz);
 
     const map = h('section', { class: 'course-map' });
     map.appendChild(h('h2', null, 'The course'));
@@ -292,6 +314,14 @@
     return art;
   }
 
+  const blitzApi = {
+    renderMath,
+    lessonTitle: id => (byId[id] ? `Lesson ${byId[id].number}, ${byId[id].title}` : 'the lessons'),
+    getRecord: id => (progress.blitz && progress.blitz[id]) || null,
+    saveRecord: (id, rec) => { progress.blitz = progress.blitz || {}; progress.blitz[id] = rec; save(); },
+    onChange: () => { const hash = location.hash.replace(/^#\/?/, '').split('/'); renderNav(hash[0] === 'blitz' && hash[1] ? 'blitz-' + hash[1] : 'blitz'); },
+  };
+
   /* ---------------------------------------------------------- router */
   function route(keepScroll) {
     const hash = location.hash.replace(/^#\/?/, '');
@@ -300,6 +330,8 @@
     if (!kind) node = home();
     else if (kind === 'lesson' && byId[id]) { node = lessonView(byId[id]); active = id; title = `${byId[id].title} | Pre-calculus crash course`; }
     else if (kind === 'formulas') { node = formulas(); active = 'formulas'; title = 'Formula sheet | Pre-calculus crash course'; }
+    else if (kind === 'blitz' && !id) { node = Blitz.indexView(blitzApi); active = 'blitz'; title = 'Blitz sessions | Pre-calculus crash course'; }
+    else if (kind === 'blitz' && Blitz.get(id)) { node = Blitz.blitzView(Blitz.get(id), blitzApi); active = 'blitz-' + id; title = `${Blitz.get(id).title} | Pre-calculus crash course`; }
     else if (kind === 'final') { node = finalCheck(); active = 'final'; title = 'Final check | Pre-calculus crash course'; }
     else node = notFound();
     view.innerHTML = '';
