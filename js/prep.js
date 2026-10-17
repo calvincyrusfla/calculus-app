@@ -559,6 +559,283 @@
         },
       ],
     },
+    '3': {
+      blitz: '3',
+      title: 'Blitz 3 prep plan',
+      lede: 'Six sessions that cover every question type on Blitz 3: what a logarithm is, the log rules, exponential and log graphs, and solving equations. Read the method, check the example, then practice until you get two in a row right.',
+      sessions: [
+        {
+          title: 'What a logarithm means',
+          minutes: 25,
+          goal: 'Move between exponential and log form, and evaluate logs.',
+          topics: [
+            {
+              title: 'Exponential form and log form', qs: [14], gens: ['logform'], lesson: 'exp-log',
+              method: [
+                R`$b^y = x$ is the same statement as $\log_b x = y$.`,
+                R`The base stays the base. The logarithm <strong>equals the exponent</strong>.`,
+              ],
+              example: {
+                problem: R`Write $6^3 = 216$ in logarithmic form.`,
+                steps: [R`Base 6, exponent 3, result 216.`, R`$\log_6 216 = 3$.`],
+              },
+              trap: R`Putting the result in the base, as in $\log_{216} 6 = 3$.`,
+            },
+            {
+              title: 'Evaluating logs exactly', qs: [3], gens: ['evallog'], lesson: 'exp-log',
+              method: [
+                R`Write the base and the argument as powers of the same number.`,
+                R`Ask: what exponent turns the base into the argument?`,
+                R`Fraction bases flip signs: $\tfrac{1}{7} = 7^{-1}$.`,
+              ],
+              example: {
+                problem: R`Simplify $\log_{1/7} 49$.`,
+                steps: [
+                  R`$\tfrac{1}{7} = 7^{-1}$ and $49 = 7^2$.`,
+                  R`$(7^{-1})^y = 7^2$ means $-y = 2$.`,
+                  R`$y = -2$.`,
+                ],
+              },
+              trap: R`Answering $2$ by ignoring the fraction base.`,
+            },
+            {
+              title: 'Change of base', qs: [1], gens: ['changebase'], lesson: 'exp-log',
+              method: [
+                R`$\log_b a = \dfrac{\ln a}{\ln b}$ (or use $\log$ on both).`,
+                R`The <strong>argument</strong> goes on top, the <strong>base</strong> on the bottom.`,
+                R`Round only at the end, to 4 decimal places.`,
+              ],
+              example: {
+                problem: R`Approximate $\log_9 0.6$.`,
+                steps: [R`$\dfrac{\ln 0.6}{\ln 9} = \dfrac{-0.5108}{2.1972}$.`, R`$\approx -0.2325$.`],
+              },
+              trap: R`Dividing the other way ($\tfrac{\ln 9}{\ln 0.6} \approx -4.3013$). Every wrong choice is a different calculator slip.`,
+            },
+          ],
+        },
+        {
+          title: 'The log rules',
+          minutes: 25,
+          goal: 'Expand, condense, and pull exponents out front.',
+          topics: [
+            {
+              title: 'Expanding a logarithm', qs: [4], gens: ['expand'], lesson: 'exp-log',
+              method: [
+                R`Product inside: add logs. Quotient inside: subtract logs.`,
+                R`Exponents come down in front as coefficients.`,
+                R`Evaluate any pure number: $\log_2 \tfrac{1}{32} = -5$.`,
+              ],
+              example: {
+                problem: R`Expand $\log_2\!\left(\tfrac{1}{32}p^3 q\right)$.`,
+                steps: [
+                  R`$\log_2 \tfrac{1}{32} + \log_2 p^3 + \log_2 q$.`,
+                  R`$\log_2 \tfrac{1}{32} = \log_2 2^{-5} = -5$.`,
+                  R`$-5 + 3\log_2 p + \log_2 q$.`,
+                ],
+              },
+              trap: R`Multiplying the exponent into the number, as in $-15\log_2 p$.`,
+            },
+            {
+              title: 'Power property with radicals', qs: [15], gens: ['power'], lesson: 'exp-log',
+              method: [
+                R`Rewrite the root as a fractional exponent: $\sqrt[n]{x^m} = x^{m/n}$.`,
+                R`Bring the exponent down: $\ln x^{m/n} = \tfrac{m}{n}\ln x$.`,
+              ],
+              example: {
+                problem: R`Simplify $\ln \sqrt[8]{x^9}$.`,
+                steps: [R`$\sqrt[8]{x^9} = x^{9/8}$.`, R`$\tfrac{9}{8}\ln x$.`],
+              },
+              trap: R`Turning the root into a subtraction or a quotient of logs. A root is just a fractional power.`,
+            },
+            {
+              title: 'Condensing to one logarithm', qs: [18], gens: ['condense'], lesson: 'exp-log',
+              method: [
+                R`Plus signs become multiplication inside one log; minus signs become division.`,
+                R`Simplify the number inside, then evaluate the log if you can.`,
+              ],
+              example: {
+                problem: R`Condense $\log_5 10 + \log_5 20 - \log_5 8$.`,
+                steps: [R`$\log_5 \dfrac{10 \cdot 20}{8} = \log_5 25$.`, R`$25 = 5^2$, so the answer is $2$.`],
+              },
+              trap: R`Adding and subtracting the numbers themselves ($\log_5 22$). The rules multiply and divide.`,
+            },
+          ],
+        },
+        {
+          title: 'Exponential and log graphs',
+          minutes: 30,
+          goal: 'Match equations to graphs and state domain and range.',
+          topics: [
+            {
+              title: 'Graphing b^x', qs: [10], gens: ['expgraph'], lesson: 'exp-log',
+              method: [
+                R`Every $b^x$ passes through $(0, 1)$ with asymptote $y = 0$.`,
+                R`$b > 1$ rises left to right; $0 < b < 1$ falls.`,
+                R`Domain $(-\infty, \infty)$, range $(0, \infty)$.`,
+              ],
+              trap: R`A choice can have the right picture with domain and range swapped. Check both the graph and the text.`,
+            },
+            {
+              title: 'Shifting e^x', qs: [16], gens: ['egraph'], lesson: 'exp-log',
+              method: [
+                R`$e^{x + h}$ shifts left $h$; $e^{x - h}$ shifts right $h$.`,
+                R`$+ k$ outside shifts up $k$ and moves the asymptote to $y = k$.`,
+                R`The range starts at the asymptote: $(k, \infty)$.`,
+              ],
+              trap: R`Reading $e^{x+1}$ as a shift up 1. A change in the exponent moves the graph sideways.`,
+            },
+            {
+              title: 'Reflecting a^x', qs: [17], gens: ['reflectexp'], lesson: 'exp-log',
+              method: [
+                R`$a^{-x}$: reflect across the $y$-axis. Still positive, now falls to the right.`,
+                R`$-a^x$: reflect across the $x$-axis. Range becomes $(-\infty, 0)$.`,
+              ],
+              trap: R`Mixing up the two reflections. A negative <em>in the exponent</em> flips left-right; a negative <em>in front</em> flips up-down.`,
+            },
+            {
+              title: 'Shifting log graphs', qs: [11], gens: ['loggraph'], lesson: 'exp-log',
+              method: [
+                R`$\log_2 x$ has vertical asymptote $x = 0$ and passes through $(1, 0)$, rising to the right.`,
+                R`$\log_2(x - h)$ moves the asymptote to $x = h$. $\ + k$ moves everything up $k$.`,
+                R`The key point moves from $(1, 0)$ to $(h + 1, k)$.`,
+              ],
+              trap: R`Choosing a graph that falls to the right. Without a negative in front, a log graph always rises.`,
+            },
+            {
+              title: 'Domain of a log', qs: [9], gens: ['logdomain'], lesson: 'exp-log',
+              method: [
+                R`The argument of a log must be strictly positive.`,
+                R`For a quadratic argument, factor, find the zeros, and keep the intervals where it is positive.`,
+                R`Strict inequality, so parentheses, never brackets.`,
+              ],
+              example: {
+                problem: R`Domain of $\ln(x^2 + 3x - 18)$.`,
+                steps: [R`$(x + 6)(x - 3) > 0$.`, R`Positive outside the zeros $-6$ and $3$.`, R`$(-\infty, -6) \cup (3, \infty)$.`],
+              },
+              trap: R`Using brackets, or flipping the signs of the zeros.`,
+            },
+          ],
+        },
+        {
+          title: 'Solving exponential equations',
+          minutes: 35,
+          goal: 'Solve for a variable stuck in an exponent.',
+          topics: [
+            {
+              title: 'Rewriting with the same base', qs: [8], gens: ['samebase'], lesson: 'exp-log',
+              method: [
+                R`Write both sides as powers of the same number. $\tfrac{1}{64} = 2^{-6}$ and $8 = 2^3$.`,
+                R`Set the exponents equal and solve the linear equation.`,
+              ],
+              example: {
+                problem: R`Solve $8^{4x - 4} = \left(\tfrac{1}{64}\right)^{x + 5}$.`,
+                steps: [
+                  R`$2^{3(4x - 4)} = 2^{-6(x + 5)}$.`,
+                  R`$12x - 12 = -6x - 30$.`,
+                  R`$18x = -18$, so $x = -1$.`,
+                ],
+              },
+              trap: R`Forgetting the negative from the reciprocal $\tfrac{1}{64} = 2^{-6}$.`,
+            },
+            {
+              title: 'Taking logs of both sides', qs: [5, 6], gens: ['solvecommon', 'solvenatural'], lesson: 'exp-log',
+              method: [
+                R`Isolate the exponential first (move any constants away).`,
+                R`Take $\log$ or $\ln$ of both sides; the exponent comes down as a factor.`,
+                R`With $x$ on both sides, gather the $x$ terms, factor out $x$, and divide.`,
+              ],
+              example: {
+                problem: R`Solve $8^{4x + 5} = 5^{9x}$.`,
+                steps: [
+                  R`$(4x + 5)\ln 8 = 9x\ln 5$.`,
+                  R`$5\ln 8 = 9x\ln 5 - 4x\ln 8 = x(9\ln 5 - 4\ln 8)$.`,
+                  R`$x = \dfrac{5\ln 8}{9\ln 5 - 4\ln 8} \approx 1.6859$.`,
+                ],
+              },
+              trap: R`Taking the log before isolating. In $10^{9x - 1} - 8000 = 110000$, add 8000 first to get $118{,}000$.`,
+            },
+            {
+              title: 'Quadratic form', qs: [7], gens: ['quadexp'], lesson: 'exp-log',
+              method: [
+                R`Notice $e^{2x} = (e^x)^2$. Let $u = e^x$.`,
+                R`Factor the quadratic in $u$.`,
+                R`$e^x$ is always positive, so throw out any negative value of $u$.`,
+              ],
+              example: {
+                problem: R`Solve $e^{2x} + 4e^x - 32 = 0$.`,
+                steps: [R`$(u - 4)(u + 8) = 0$.`, R`$e^x = 4$ works; $e^x = -8$ is impossible.`, R`$\{\ln 4\};\ x \approx 1.3863$.`],
+              },
+              trap: R`Keeping $\ln(-8)$ or rewriting it as $-\ln 8$. Neither is valid.`,
+            },
+          ],
+        },
+        {
+          title: 'Solving log equations and applications',
+          minutes: 30,
+          goal: 'Solve equations with logs and compare investments.',
+          topics: [
+            {
+              title: 'Combining logs, then solving', qs: [12], gens: ['logsum'], lesson: 'exp-log',
+              method: [
+                R`Use the product rule to make one log on each side.`,
+                R`Same base on both sides: set the arguments equal.`,
+                R`Solve, then <strong>check</strong>: every log argument must be positive.`,
+              ],
+              example: {
+                problem: R`Solve $\log_5(5p + 3) + \log_5 p = \log_5 14$.`,
+                steps: [
+                  R`$p(5p + 3) = 14$, so $5p^2 + 3p - 14 = 0$.`,
+                  R`$(5p - 7)(p + 2) = 0$: $p = \tfrac{7}{5}$ or $p = -2$.`,
+                  R`$\log_5(-2)$ is undefined, so $\left\{\tfrac{7}{5}\right\}$.`,
+                ],
+              },
+              trap: R`Adding the arguments instead of multiplying them, which gives $\tfrac{11}{6}$.`,
+            },
+            {
+              title: 'Isolating a log', qs: [13], gens: ['logsolve'], lesson: 'exp-log',
+              method: [
+                R`Undo the outside operations first: add, then divide, until the log is alone.`,
+                R`Rewrite in exponential form and solve.`,
+              ],
+              example: {
+                problem: R`Solve $2\log_4(5p - 8) - 3 = -1$.`,
+                steps: [R`$2\log_4(5p - 8) = 2$, so $\log_4(5p - 8) = 1$.`, R`$5p - 8 = 4^1 = 4$.`, R`$p = \tfrac{12}{5}$.`],
+              },
+              trap: R`Subtracting the constant instead of adding it back.`,
+            },
+            {
+              title: 'Simple vs. continuous interest', qs: [2], gens: ['interest'], lesson: 'exp-log',
+              method: [
+                R`Simple interest: $I = Prt$.`,
+                R`Continuous: $A = Pe^{rt}$, so interest is $Pe^{rt} - P$.`,
+                R`Write rates as decimals ($7\% = 0.07$) and compare the two interest amounts.`,
+              ],
+              example: {
+                problem: R`8,000 dollars: 7.2% simple or 7% continuous, for 30 years.`,
+                steps: [
+                  R`Simple: $8000(0.072)(30) = 17{,}280$.`,
+                  R`Continuous: $8000e^{2.1} - 8000 \approx 57{,}329$.`,
+                  R`Continuous earns more.`,
+                ],
+              },
+              trap: R`Comparing the continuous total $A$ to the simple interest $I$. Compare interest to interest.`,
+            },
+          ],
+        },
+        {
+          title: 'Dress rehearsal',
+          minutes: 30,
+          goal: 'Take Blitz 3 under quiz conditions and close the gaps.',
+          rehearsal: true,
+          steps: [
+            R`Take Blitz 3 start to finish without notes. Use a calculator for the decimal questions.`,
+            R`Read the explanation for every question you missed, even lucky guesses.`,
+            R`Go back to the session above that covers each miss and do two practice questions.`,
+            R`Retake Blitz 3. Every attempt has new numbers. You are ready when you score 90 or more twice in a row.`,
+          ],
+        },
+      ],
+    },
   };
 
   /* ------------------------------------------------------------ view */

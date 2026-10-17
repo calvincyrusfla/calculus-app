@@ -157,7 +157,7 @@
     wrap.appendChild(how);
 
     const blz = h('section', { class: 'home-blitz' });
-    blz.innerHTML = `<div><h2>Blitz sessions</h2><p>Full practice quizzes that mirror a real class quiz: 21 questions, 100 points, no hints until you submit, and new numbers every attempt.</p></div>`;
+    blz.innerHTML = `<div><h2>Blitz sessions</h2><p>Full practice quizzes that mirror your class quizzes: same question types, 100 points, no hints until you submit, and new numbers every attempt.</p></div>`;
     const blzList = h('div', { class: 'home-blitz-list' });
     Blitz.list.forEach(b => {
       const rec = progress.blitz && progress.blitz[b.id];

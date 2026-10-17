@@ -372,6 +372,7 @@ a.blitz-card:hover { border-color: var(--sin); }
 .bchoice input { margin-top: 0.3rem; accent-color: var(--sin); flex: none; width: 1.05rem; height: 1.05rem; }
 .bchoice-text { min-width: 0; overflow-x: auto; line-height: 1.55; }
 .bchoice-graph { flex: 1; min-width: 0; }
+.bchoice-caption { margin: 0.4rem 0 0; font-size: var(--step--1); line-height: 1.5; }
 .bq-choices .bchoice:has(input:disabled) { cursor: default; }
 .bchoice.is-answer { border-color: var(--right); background: var(--right-soft); }
 .bchoice.is-picked-wrong { border-color: var(--wrong); background: var(--wrong-soft); }

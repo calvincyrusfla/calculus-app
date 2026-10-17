@@ -1009,17 +1009,340 @@
     });
   }
 
+  /* ============================================================ BLITZ 3 generators */
+  const d4 = v => (Math.round(v * 10000) / 10000).toFixed(4).replace(/^-0\.0000$/, '0.0000');
+  const commas = n => n.toLocaleString('en-US').replace(/,/g, '{,}');
+  const lnT = n => `\\ln ${n}`;
+  const GT = (key, spec, text) => ({ graph: Object.assign({ key }, spec), text });
+  const DR = (d, r) => `Domain: $${d}$<br>Range: $${r}$`;
+
+  // 1. Change of base
+  function q3_changebase() {
+    const b = ri(2, 9);
+    const a = pick([ri(2, 9) / 10, ri(11, 99), ri(2, 40) / 10]);
+    const A = Math.log(a), B = Math.log(b);
+    const vals = [A / B, B / A, A / b, A * B];
+    return {
+      prompt: `Use the change-of-base formula and a calculator to approximate the logarithm to 4 decimal places.<span class="bexpr">$\\log_{${b}} ${a}$</span>`,
+      choices: vals.map(v => `$${d4(v)}$`),
+      why: `$\\log_{${b}} ${a} = \\dfrac{\\ln ${a}}{\\ln ${b}} = \\dfrac{${d4(A)}}{${d4(B)}} \\approx ${d4(A / B)}$. The argument goes on top; the base goes on the bottom.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 2. Simple vs continuous interest
+  function q3_interest() {
+    for (let i = 0; i < 200; i++) {
+      const P = pick([5000, 6000, 8000, 10000, 12000, 15000]);
+      const r2 = pick([4, 4.5, 5, 5.5, 6, 6.5, 7]);
+      const r1 = r2 + pick([0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6]);
+      const t = pick([10, 15, 20, 25, 30]);
+      const simple = P * r1 / 100 * t, cont = P * (Math.exp(r2 / 100 * t) - 1);
+      if (Math.abs(simple - cont) / Math.min(simple, cont) < 0.03) continue;
+      const contWins = cont > simple;
+      const money = v => commas(Math.round(v * 100) / 100);
+      return {
+        prompt: `Solve the problem.<span class="bexpr">James wants to invest ${commas(P).replace(/\{,\}/g, ',')} dollars. He can invest at ${r1}% simple interest for ${t} years, or at ${r2}% compounded continuously for ${t} years. Which option results in more total interest?</span>`,
+        choices: [`${r1}% simple interest results in more total interest`, `${r2}% compounded continuously results in more total interest`],
+        answer: contWins ? 1 : 0, fixed: true,
+        why: `Simple interest: $I = Prt = ${commas(P)}(${r1 / 100})(${t}) = ${money(simple)}$. Continuous: $I = Pe^{rt} - P = ${commas(P)}e^{${r2 / 100}(${t})} - ${commas(P)} \\approx ${money(cont)}$. The ${contWins ? 'continuous' : 'simple'} option earns more.`,
+        lesson: 'exp-log',
+      };
+    }
+    return q3_interest();
+  }
+
+  // 3. Evaluate a logarithm exactly
+  function q3_evallog() {
+    const b = pick([2, 3, 5, 7]), p = pick([-1, -1, 2, -2]), q = pick([-2, -1, 1, 2, 3]);
+    const powTex = e => (e > 0 ? String(Math.pow(b, e)) : `\\tfrac{1}{${Math.pow(b, -e)}}`);
+    const v = [q, p];
+    return {
+      prompt: `Simplify the expression.<span class="bexpr">$\\log_{${powTex(p)}} ${powTex(q)}$</span>`,
+      choices: [`$${frac(q, p)}$`, `$${frac(-q, p)}$`, `$${frac(p, q)}$`, `$${frac(-p, q)}$`],
+      why: `Write both as powers of ${b}: the base is $${b}^{${p}}$ and the argument is $${b}^{${q}}$. Ask what power $y$ makes $(${b}^{${p}})^y = ${b}^{${q}}$: $${p}y = ${q}$, so $y = ${frac(v[0], v[1])}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 4. Expand a logarithm
+  function q3_expand() {
+    const b = pick([2, 3]), k = b === 2 ? ri(2, 5) : ri(2, 4), m = ri(2, 5);
+    const L = v => `\\log_{${b}} ${v}`;
+    return {
+      prompt: `Write the logarithm as a sum or difference of logarithms. Simplify each term as much as possible.<span class="bexpr">$\\log_{${b}}\\!\\left(\\dfrac{1}{${Math.pow(b, k)}}p^${m}q\\right)$</span>`,
+      choices: [
+        `$-${k} + ${m}${L('p')} + ${L('q')}$`,
+        `$-${k * m}${L('p')} + ${L('q')}$`,
+        `$\\tfrac{1}{${k}} + ${m}${L('p')} + ${L('q')}$`,
+        `$${frac(m, k)}${L('p')} + ${L('q')}$`,
+      ],
+      why: `Product rule: $${L(`\\tfrac{1}{${Math.pow(b, k)}}`)} + ${L('p^' + m)} + ${L('q')}$. Since $\\tfrac{1}{${Math.pow(b, k)}} = ${b}^{-${k}}$, the first term is $-${k}$. The power rule turns $${L('p^' + m)}$ into $${m}${L('p')}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 5. 10^(ax - c) - d = e
+  function q3_solvecommon() {
+    const a = ri(2, 9), c = ri(1, 5), d = ri(2, 9) * 1000, e = ri(20, 150) * 1000;
+    const S = e + d, W = e - d;
+    const x = (Math.log10(S) + c) / a;
+    const set = (num, den, v) => `$\\left\\{ \\dfrac{\\log ${commas(num)} + ${c}}{${den}} \\right\\};\\ x \\approx ${d4(v)}$`;
+    return {
+      prompt: `Solve the equation. Write the solution set with exact values in terms of common logarithms, and give the approximate solution to 4 decimal places.<span class="bexpr">$10^{${a}x - ${c}} - ${commas(d)} = ${commas(e)}$</span>`,
+      choices: [
+        set(S, a, x),
+        set(S, `\\log ${a}`, (Math.log10(S) + c) / Math.log10(a)),
+        set(W, a, (Math.log10(W) + c) / a),
+        '$\\{\\ \\}$',
+      ],
+      why: `Isolate the power: $10^{${a}x - ${c}} = ${commas(S)}$. Take the common log: $${a}x - ${c} = \\log ${commas(S)}$. Solve: $x = \\dfrac{\\log ${commas(S)} + ${c}}{${a}} \\approx ${d4(x)}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 6. b^(px + q) = c^(rx)
+  function q3_solvenatural() {
+    let b, c, p, q, r, den;
+    do { b = ri(2, 9); c = ri(2, 9); p = ri(2, 9); q = ri(1, 9); r = ri(2, 9); den = r * Math.log(c) - p * Math.log(b); }
+    while (b === c || Math.abs(den) < 0.8);
+    const x = q * Math.log(b) / den;
+    const set = (num, d, v) => `$\\left\\{ \\dfrac{${num}}{${d}} \\right\\};\\ x \\approx ${d4(v)}$`;
+    return {
+      prompt: `Solve the equation. Write the solution set with exact values in terms of natural logarithms, and give the approximate solution to 4 decimal places.<span class="bexpr">$${b}^{${p}x + ${q}} = ${c}^{${r}x}$</span>`,
+      choices: [
+        set(`${q}\\ln ${b}`, `${r}\\ln ${c} - ${p}\\ln ${b}`, x),
+        set(`${q}\\ln ${b}`, `${p}\\ln ${b} - ${r}\\ln ${c}`, -x),
+        set(`\\ln ${c}`, `\\ln ${r} - \\ln ${p}`, Math.log(c) / (Math.log(r) - Math.log(p) || 1)),
+        '$\\{\\ \\}$',
+      ],
+      why: `Take $\\ln$ of both sides: $(${p}x + ${q})\\ln ${b} = ${r}x\\ln ${c}$. Collect the $x$ terms: $${q}\\ln ${b} = x(${r}\\ln ${c} - ${p}\\ln ${b})$. Divide: $x = \\dfrac{${q}\\ln ${b}}{${r}\\ln ${c} - ${p}\\ln ${b}} \\approx ${d4(x)}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 7. e^(2x) + a e^x - b = 0
+  function q3_quadexp() {
+    let m, n;
+    do { m = ri(2, 9); n = ri(2, 9); } while (m === n);
+    const a = n - m, b = m * n;
+    return {
+      prompt: `Solve the equation. Write the solution set with exact values in terms of natural logarithms, and give approximate solutions to 4 decimal places.<span class="bexpr">$e^{2x} ${a > 0 ? '+' : '-'} ${Math.abs(a) === 1 ? '' : Math.abs(a)}e^x - ${b} = 0$</span>`,
+      choices: [
+        `$\\{\\ln ${m}\\};\\ x \\approx ${d4(Math.log(m))}$`,
+        `$\\{\\ln ${m},\\ \\ln(-${n})\\};\\ x \\approx ${d4(Math.log(m))}$ or $${d4(-Math.log(n))}$`,
+        `$\\{\\ln ${m},\\ -\\ln ${n}\\};\\ x \\approx ${d4(Math.log(m))}$ or $${d4(-Math.log(n))}$`,
+        '$\\{\\ \\}$',
+      ],
+      why: `Let $u = e^x$: $u^2 ${a > 0 ? '+' : '-'} ${Math.abs(a) === 1 ? '' : Math.abs(a)}u - ${b} = (u - ${m})(u + ${n}) = 0$. So $e^x = ${m}$ or $e^x = -${n}$. An exponential is never negative, so only $x = \\ln ${m} \\approx ${d4(Math.log(m))}$ works.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 8. Same-base exponential equation
+  function q3_samebase() {
+    for (let i = 0; i < 300; i++) {
+      const g = pick([2, 3]), s = ri(1, 3), t = ri(1, 3);
+      if (s === t || Math.pow(g, Math.max(s, t)) > 64) continue;
+      const al = ri(2, 5), be = nz(-6, 6), ga = nz(-6, 6);
+      const num = -t * ga - s * be, den = s * al + t;
+      if (num % den !== 0 && Math.abs(den) > 6) continue;
+      const v = frac(num, den);
+      const cands = [v, frac(-num, den), frac(den, num || 1), frac(num + den, den)];
+      if (num === 0) continue;
+      return {
+        prompt: `Solve the equation.<span class="bexpr">$${Math.pow(g, s)}^{${poly([[al, 'x'], [be, '']])}} = \\left(\\dfrac{1}{${Math.pow(g, t)}}\\right)^{${poly([[1, 'x'], [ga, '']])}}$</span>`,
+        choices: cands.map(c => `$${c}$`),
+        why: `Write both sides as powers of ${g}: $${g}^{${s}(${poly([[al, 'x'], [be, '']])})} = ${g}^{-${t}(${poly([[1, 'x'], [ga, '']])})}$. Set exponents equal: $${poly([[s * al, 'x'], [s * be, '']])} = ${poly([[-t, 'x'], [-t * ga, '']])}$, so $${den}x = ${num}$ and $x = ${v}$.`,
+        lesson: 'exp-log',
+      };
+    }
+    return q3_samebase();
+  }
+
+  // 9. Domain of ln of a quadratic
+  function q3_logdomain() {
+    let r1, r2;
+    do { r1 = nz(-9, 9); r2 = nz(-9, 9); } while (r1 >= r2 || r1 === -r2);
+    return {
+      prompt: `Write the domain in interval notation.<span class="bexpr">$f(x) = \\ln(${polyArr([1, -(r1 + r2), r1 * r2])})$</span>`,
+      choices: [
+        `$(-\\infty, ${r1}) \\cup (${r2}, \\infty)$`,
+        `$[${r1}, ${r2}]$`,
+        `$(-\\infty, ${-r2}) \\cup (${-r1}, \\infty)$`,
+        `$(-\\infty, ${-r2}] \\cup [${-r1}, \\infty)$`,
+      ],
+      why: `A log needs a positive argument: $${xm(r1)}${xm(r2)} > 0$. The zeros are $${r1}$ and $${r2}$, and the product is positive outside them. Strict inequality, so parentheses.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 10. Graph b^x and give domain/range
+  function q3_expgraph() {
+    const [p, q] = pick([[3, 2], [5, 2], [4, 3], [2, 3], [2, 5], [3, 4]]);
+    const b = p / q;
+    const win = { x: [-6, 6], y: [-1, 11], ylabelEvery: 2 };
+    const g = (base, key, text) => GT(key, Object.assign({ pieces: [{ f: x => Math.pow(base, x), from: -6, to: 6 }] }, win), text);
+    const good = DR('(-\\infty, \\infty)', '(0, \\infty)'), bad = DR('(0, \\infty)', '(-\\infty, \\infty)');
+    return {
+      prompt: `Graph the function and write the domain and range in interval notation.<span class="bexpr">$f(x) = \\left(\\dfrac{${p}}{${q}}\\right)^x$</span>`,
+      choices: [g(b, 'ok', good), g(b, 'okbad', bad), g(1 / b, 'flip', good), g(1 / b, 'flipbad', bad)],
+      why: `The base $\\tfrac{${p}}{${q}}$ is ${b > 1 ? 'greater than 1, so the graph rises' : 'between 0 and 1, so the graph falls'} from left to right, passing through $(0, 1)$. Any $x$ works, and the outputs are always positive: domain $(-\\infty, \\infty)$, range $(0, \\infty)$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 11. Transformed log graph
+  function q3_loggraph() {
+    const h = ri(3, 7), k = pick([-4, -3, -2, 2, 3, 4]);
+    const win = { x: [-10, 10], y: [-10, 10], xlabelEvery: 5, ylabelEvery: 5 };
+    const g = (s, kk, key) => G(key, Object.assign({
+      pieces: [{ f: x => s * Math.log2(x - h) + kk, from: h + 0.001, to: 10 }], asym: [{ x: h }],
+    }, win));
+    return {
+      prompt: `Use transformations of the graph of $y = \\log_2 x$ to graph the function.<span class="bexpr">$y = \\log_2(x - ${h}) ${k > 0 ? '+' : '-'} ${Math.abs(k)}$</span>`,
+      choices: [g(1, k, 'ok'), g(-1, k, 'refl'), g(1, -k, 'vflip'), g(-1, -k, 'both')],
+      why: `$x - ${h}$ shifts the graph right ${h}, so the vertical asymptote moves to $x = ${h}$. The $${k > 0 ? '+' : '-'} ${Math.abs(k)}$ shifts it ${k > 0 ? 'up' : 'down'} ${Math.abs(k)}. The shape still rises to the right, passing through $(${h + 1}, ${k})$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 12. log_b(ap + c) + log_b p = log_b d
+  function q3_logsum() {
+    let a, u, w;
+    do { a = ri(2, 6); u = ri(1, 9); w = ri(1, 6); } while (a * w === u || gcd(a, u) !== 1 || u % a === 0);
+    const c = a * w - u, d = u * w, base = pick([2, 3, 4, 5, 6, 7]);
+    const L = v => `\\log_{${base}} ${v}`;
+    return {
+      prompt: `Solve the equation.<span class="bexpr">$${L(`(${poly([[a, 'p'], [c, '']])})`)} + ${L('p')} = ${L(d)}$</span>`,
+      choices: [`$\\left\\{${frac(u, a)}\\right\\}$`, `$\\left\\{${frac(u, a)},\\ ${-w}\\right\\}$`, `$\\left\\{${frac(d - c, a + 1)}\\right\\}$`, '$\\{\\ \\}$'],
+      why: `Combine: $${L(`(p(${poly([[a, 'p'], [c, '']])}))`)} = ${L(d)}$, so $${poly([[a, 'p^2'], [c, 'p'], [-d, '']])} = 0$, which factors as $(${poly([[a, 'p'], [-u, '']])})(p + ${w}) = 0$. That gives $p = ${frac(u, a)}$ or $p = ${-w}$. Reject $${-w}$ because $${L('p')}$ needs $p > 0$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 13. 2 log_b(ap - c) - m = n
+  function q3_logsolve() {
+    let b, k, m, a, c;
+    do { b = pick([2, 3, 4, 5]); k = pick([1, 2]); m = ri(1, 6); a = ri(2, 7); c = ri(2, 9); } while (Math.pow(b, k) === c || gcd(a, c) === a);
+    const n = 2 * k - m, bk = Math.pow(b, k);
+    return {
+      prompt: `Solve the equation. Write the solution set with the exact solutions.<span class="bexpr">$2\\log_{${b}}(${poly([[a, 'p'], [-c, '']])}) - ${m} = ${n}$</span>`,
+      choices: [`$\\left\\{${frac(bk + c, a)}\\right\\}$`, `$\\left\\{${frac(bk - c, a)}\\right\\}$`, `$\\left\\{${frac(c + k, a)}\\right\\}$`, `$\\left\\{${frac(-bk - c, a)}\\right\\}$`],
+      why: `Add ${m} and divide by 2: $\\log_{${b}}(${poly([[a, 'p'], [-c, '']])}) = ${k}$. Exponential form: $${poly([[a, 'p'], [-c, '']])} = ${b}^{${k}} = ${bk}$. So $p = ${frac(bk + c, a)}$, which keeps the argument positive.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 14. Exponential form to log form
+  function q3_logform() {
+    const b = ri(2, 9), n = b > 5 ? ri(2, 3) : ri(2, 4), neg = Math.random() < 0.3;
+    const v = Math.pow(b, n);
+    const V = neg ? `\\tfrac{1}{${v}}` : String(v), N = neg ? -n : n;
+    return {
+      prompt: `Write the equation in logarithmic form.<span class="bexpr">$${b}^{${N}} = ${V}$</span>`,
+      choices: [`$\\log_{${b}} ${V} = ${N}$`, `$\\log_{${V}} ${N} = ${b}$`, `$\\log_{${N}} ${V} = ${b}$`, `$\\log_{${V}} ${b} = ${N}$`],
+      why: `$b^y = x$ becomes $\\log_b x = y$: the base stays the base, and the logarithm equals the exponent. So $\\log_{${b}} ${V} = ${N}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 15. Power property with a radical
+  function q3_power() {
+    let m, n;
+    do { m = ri(2, 9); n = ri(2, 9); } while (m === n);
+    return {
+      prompt: `Apply the power property of logarithms.<span class="bexpr">$\\ln \\sqrt[${n}]{x^${m}}$</span>`,
+      choices: [`$${frac(m, n)}\\ln x$`, `$${m}\\ln x - ${n}\\ln x$`, `$\\tfrac{1}{${n}}\\ln x \\cdot ${m}\\ln x$`, `$\\dfrac{${m}\\ln x}{${n}\\ln x}$`],
+      why: `Rewrite the radical as a power: $\\sqrt[${n}]{x^${m}} = x^{${m}/${n}}$. The power property brings the exponent to the front: $${frac(m, n)}\\ln x$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 16. Transformed e^x graph
+  function q3_egraph() {
+    const h = pick([-2, -1, 1, 2]), k = pick([0, 0, -1, 1, 2]);
+    const win = { x: [-5, 5], y: [-5, 5], xlabelEvery: 1, ylabelEvery: 1 };
+    const g = (hh, kk, key) => GT(key, Object.assign({
+      pieces: [{ f: x => Math.exp(x + hh) + kk, from: -5, to: 5 }], asym: kk === 0 ? [] : [{ y: kk }],
+    }, win), DR('(-\\infty, \\infty)', `(${kk}, \\infty)`));
+    const inner = h > 0 ? `x + ${h}` : `x - ${-h}`;
+    return {
+      prompt: `Use transformations of the graph of $y = e^x$ to graph the function. Write the domain and range in interval notation.<span class="bexpr">$f(x) = e^{${inner}}${k === 0 ? '' : k > 0 ? ` + ${k}` : ` - ${-k}`}$</span>`,
+      choices: [g(h, k, 'ok'), g(-h, k, 'wrongdir'), g(0, k + 1, 'up'), g(0, k - 1, 'down')],
+      why: `$${inner}$ in the exponent shifts the graph ${h > 0 ? 'left' : 'right'} ${Math.abs(h)}. ${k === 0 ? 'There is no vertical shift, so the asymptote stays at $y = 0$.' : `The ${k > 0 ? '+' : '-'}${Math.abs(k)} shifts it ${k > 0 ? 'up' : 'down'}, moving the asymptote to $y = ${k}$.`} Range: $(${k}, \\infty)$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 17. Reflections of a^x
+  function q3_reflectexp() {
+    const a = pick([2, 3, 4]);
+    const win = { x: [-10, 10], y: [-10, 10], xlabelEvery: 5, ylabelEvery: 5 };
+    const forms = [
+      ['a^{-x}', 1, -1, 'Replacing $x$ with $-x$ reflects across the $y$-axis: the graph falls from left to right and stays positive.'],
+      ['-a^{x}', -1, 1, 'The negative out front reflects across the $x$-axis: the graph is below the axis and falls to the right.'],
+      ['-a^{-x}', -1, -1, 'Both reflections: the graph is below the axis and rises toward $0$ as $x$ increases.'],
+    ];
+    const [tpl, s, t, why] = pick(forms);
+    const g = (ss, tt, key) => GT(key, Object.assign({ pieces: [{ f: x => ss * Math.pow(a, tt * x), from: -10, to: 10 }] }, win),
+      DR('(-\\infty, \\infty)', ss > 0 ? '(0, \\infty)' : '(-\\infty, 0)'));
+    const all = [[1, -1, 'a'], [1, 1, 'b'], [-1, -1, 'c'], [-1, 1, 'd']];
+    const ordered = [[s, t, 'ok'], ...all.filter(([x, y]) => !(x === s && y === t)).map(([x, y, kk]) => [x, y, kk])];
+    return {
+      prompt: `Use the graph of $y = ${a}^x$ to graph the function. Write the domain and range in interval notation.<span class="bexpr">$f(x) = ${tpl.replace('a', a)}$</span>`,
+      choices: ordered.map(([x, y, kk]) => g(x, y, kk)),
+      why: `${why} Domain: $(-\\infty, \\infty)$. Range: $${s > 0 ? '(0, \\infty)' : '(-\\infty, 0)'}$.`,
+      lesson: 'exp-log',
+    };
+  }
+
+  // 18. Condense to a single logarithm
+  function q3_condense() {
+    for (let i = 0; i < 300; i++) {
+      const b = pick([2, 3, 5]), k = ri(1, 3), C = pick([2, 3, 4, 6, 8, 10]);
+      const target = Math.pow(b, k) * C;
+      const divs = []; for (let d = 2; d < target; d++) if (target % d === 0) divs.push(d);
+      if (!divs.length) continue;
+      const A = pick(divs), B = target / A;
+      if (A === B || A === C || B === C || A + B - C <= 0 || A + B - C === Math.pow(b, k)) continue;
+      const L = v => `\\log_{${b}} ${v}`;
+      return {
+        prompt: `Write the logarithmic expression as a single logarithm with coefficient 1, and simplify as much as possible.<span class="bexpr">$${L(A)} + ${L(B)} - ${L(C)}$</span>`,
+        choices: [`$${k}$`, `$${L(A + B - C)}$`, `$${L(A * B * C)}$`, `$${L(`\\dfrac{${A + B}}{${C}}`)}$`],
+        why: `Sum becomes a product and difference becomes a quotient: $${L(`\\dfrac{${A} \\cdot ${B}}{${C}}`)} = ${L(target / C)}$. Since $${b}^{${k}} = ${target / C}$, this simplifies to $${k}$.`,
+        lesson: 'exp-log', points: 5.48,
+      };
+    }
+    return q3_condense();
+  }
+
+  function buildBlitz3() {
+    const gens = [q3_changebase, q3_interest, q3_evallog, q3_expand, q3_solvecommon, q3_solvenatural, q3_quadexp,
+      q3_samebase, q3_logdomain, q3_expgraph, q3_loggraph, q3_logsum, q3_logsolve, q3_logform, q3_power,
+      q3_egraph, q3_reflectexp, q3_condense];
+    return gens.map(gen => {
+      const q = build(gen);
+      q.points = q.points || 5.56;
+      if (q.answer == null) q.answer = 0;
+      return q;
+    });
+  }
+
   /* ============================================================ registry */
   const BLITZES = [
     {
-      id: '1', title: 'Blitz 1', topic: 'Factoring, functions, and graphs', ready: true, build: buildBlitz1,
+      id: '1', title: 'Blitz 1', topic: 'Factoring, functions, and graphs', ready: true, build: buildBlitz1, count: 21,
       covers: 'factoring, rationalizing, evaluating functions, even and odd, transformations, domain and range, piecewise functions, combining functions, intercepts, reading graphs, extrema, and symmetry',
     },
     {
-      id: '2', title: 'Blitz 2', topic: 'Polynomial and rational functions', ready: true, build: buildBlitz2,
+      id: '2', title: 'Blitz 2', topic: 'Polynomial and rational functions', ready: true, build: buildBlitz2, count: 21,
       covers: 'composition and inverses, end behavior, dividing polynomials, finding real and complex zeros, the rational zero test, the intermediate value theorem, asymptotes, and polynomial and rational inequalities',
     },
-    { id: '3', title: 'Blitz 3', topic: 'Coming soon', ready: false },
+    {
+      id: '3', title: 'Blitz 3', topic: 'Exponential and logarithmic functions', ready: true, build: buildBlitz3, count: 18,
+      covers: 'logarithmic form, evaluating and changing the base of logarithms, log properties, graphs of exponential and log functions, solving exponential and logarithmic equations, and interest',
+    },
   ];
 
   /* ============================================================ view */
@@ -1031,11 +1354,15 @@
   }
   function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-  const pts = n => (Math.round(n * 10) / 10).toString();
+  const pts = n => (Math.round(n * 100) / 100).toString();
 
   function renderChoice(label, c) {
-    if (c.graph) { const box = h('div', { class: 'bchoice-graph' }); drawGraph(box, c.graph, 260); label.appendChild(box); }
-    else label.appendChild(h('span', { class: 'bchoice-text' }, c));
+    if (c.graph) {
+      const box = h('div', { class: 'bchoice-graph' });
+      drawGraph(box, c.graph, 260);
+      if (c.text) box.appendChild(h('p', { class: 'bchoice-caption' }, c.text));
+      label.appendChild(box);
+    } else label.appendChild(h('span', { class: 'bchoice-text' }, c));
   }
 
   /* api: { renderMath, lessonTitle(id), getRecord(id), saveRecord(id, rec), onChange() } */
@@ -1065,7 +1392,7 @@
     intro.innerHTML = `
       <p class="lede">Covers ${b.covers}.</p>
       <ul class="blitz-rules">
-        <li>21 multiple-choice questions, 100 points</li>
+        <li>${b.count} multiple-choice questions, 100 points</li>
         <li>No feedback until you submit, like the real quiz</li>
         <li>New numbers every attempt, and a timer so you can track your pace</li>
       </ul>
@@ -1167,7 +1494,7 @@
         why.innerHTML = `${q.why} <a href="#/lesson/${q.lesson}">Review: ${api.lessonTitle(q.lesson)}</a>`;
         why.hidden = false;
       });
-      score = Math.round(score * 10) / 10;
+      score = Math.round(score * 100) / 100;
       const prev = api.getRecord(b.id) || { best: 0, attempts: 0 };
       api.saveRecord(b.id, { best: Math.max(prev.best, score), attempts: prev.attempts + 1, last: score });
       bar.remove();
@@ -1200,6 +1527,10 @@
     inverse: q2_inverse, hacross: q2_hacross, ivt: q2_ivt, onetoone: q2_onetoone, rationalzeros: q2_rationalzeros,
     longdiv: q2_longdiv, quadineq: q2_quadineq, ratineq: q2_ratineq, synthetic: q2_synthetic, vasym: q2_vasym,
     fromzeros: q2_fromzeros, multiplicity: q2_multiplicity,
+    changebase: q3_changebase, interest: q3_interest, evallog: q3_evallog, expand: q3_expand, solvecommon: q3_solvecommon,
+    solvenatural: q3_solvenatural, quadexp: q3_quadexp, samebase: q3_samebase, logdomain: q3_logdomain,
+    expgraph: q3_expgraph, loggraph: q3_loggraph, logsum: q3_logsum, logsolve: q3_logsolve, logform: q3_logform,
+    power: q3_power, egraph: q3_egraph, reflectexp: q3_reflectexp, condense: q3_condense,
   };
   function practice(host, keys, renderMath) {
     const box = h('div', { class: 'practice' });
