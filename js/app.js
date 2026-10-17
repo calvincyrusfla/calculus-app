@@ -50,6 +50,19 @@
       h('div', { class: 'meter-bar', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': lessons.length, 'aria-valuenow': done }, `<span style="width:${(done / lessons.length) * 100}%"></span>`)
     );
     nav.appendChild(meter);
+    const bl = h('section', { class: 'nav-part nav-extra nav-blitz' });
+    bl.appendChild(h('h2', null, '<a href="#/blitz">Blitz sessions</a>'));
+    bl.appendChild(h('ul', null, Blitz.list.map(b => {
+      const rec = progress.blitz && progress.blitz[b.id];
+      const act = activeId === 'blitz-' + b.id ? 'is-active' : '';
+      const prep = Prep.has(b.id)
+        ? `<li class="nav-prep ${activeId === 'prep-' + b.id ? 'is-active' : ''}"><a href="#/prep/${b.id}">${b.title} prep plan<span class="nav-score">${prepDone(b.id)}/${Prep.count(b.id)}</span></a></li>`
+        : '';
+      return b.ready
+        ? prep + `<li class="${act}"><a href="#/blitz/${b.id}">${b.title}${rec ? `<span class="nav-score">${Math.round(rec.best)}</span>` : ''}</a></li>`
+        : `<li class="is-soon"><span>${b.title}<span class="nav-score">soon</span></span></li>`;
+    }).join('')));
+    nav.appendChild(bl);
     parts.forEach((p, pi) => {
       const sec = h('section', { class: 'nav-part' });
       sec.appendChild(h('h2', null, `Part ${pi + 1}: ${p.title}`));
@@ -63,16 +76,6 @@
       sec.appendChild(ol);
       nav.appendChild(sec);
     });
-    const bl = h('section', { class: 'nav-part nav-extra nav-blitz' });
-    bl.appendChild(h('h2', null, '<a href="#/blitz">Blitz sessions</a>'));
-    bl.appendChild(h('ul', null, Blitz.list.map(b => {
-      const rec = progress.blitz && progress.blitz[b.id];
-      const act = activeId === 'blitz-' + b.id ? 'is-active' : '';
-      return b.ready
-        ? `<li class="${act}"><a href="#/blitz/${b.id}">${b.title}${rec ? `<span class="nav-score">${Math.round(rec.best)}</span>` : ''}</a></li>`
-        : `<li class="is-soon"><span>${b.title}<span class="nav-score">soon</span></span></li>`;
-    }).join('')));
-    nav.appendChild(bl);
     const extra = h('section', { class: 'nav-part nav-extra' });
     extra.appendChild(h('h2', null, 'Review'));
     extra.appendChild(h('ul', null,
@@ -314,6 +317,18 @@
     return art;
   }
 
+  function prepDone(id) {
+    const rec = progress.prep && progress.prep[id];
+    return rec ? Object.values(rec).filter(Boolean).length : 0;
+  }
+  const prepApi = {
+    renderMath,
+    lessonTitle: id => (byId[id] ? `Lesson ${byId[id].number}, ${byId[id].title}` : 'the lessons'),
+    isDone: (id, i) => !!(progress.prep && progress.prep[id] && progress.prep[id][i]),
+    setDone: (id, i, v) => { progress.prep = progress.prep || {}; progress.prep[id] = progress.prep[id] || {}; progress.prep[id][i] = v; save(); },
+    blitzRecord: id => (progress.blitz && progress.blitz[id]) || null,
+    onChange: () => renderNav('prep-' + location.hash.split('/')[2]),
+  };
   const blitzApi = {
     renderMath,
     lessonTitle: id => (byId[id] ? `Lesson ${byId[id].number}, ${byId[id].title}` : 'the lessons'),
@@ -332,6 +347,7 @@
     else if (kind === 'formulas') { node = formulas(); active = 'formulas'; title = 'Formula sheet | Pre-calculus crash course'; }
     else if (kind === 'blitz' && !id) { node = Blitz.indexView(blitzApi); active = 'blitz'; title = 'Blitz sessions | Pre-calculus crash course'; }
     else if (kind === 'blitz' && Blitz.get(id)) { node = Blitz.blitzView(Blitz.get(id), blitzApi); active = 'blitz-' + id; title = `${Blitz.get(id).title} | Pre-calculus crash course`; }
+    else if (kind === 'prep' && Prep.has(id)) { node = Prep.view(id, prepApi); active = 'prep-' + id; title = `${Prep.plans[id].title} | Pre-calculus crash course`; }
     else if (kind === 'final') { node = finalCheck(); active = 'final'; title = 'Final check | Pre-calculus crash course'; }
     else node = notFound();
     view.innerHTML = '';

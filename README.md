@@ -36,6 +36,7 @@ css/styles.css    all styles (light and dark themes)
 js/content.js     lesson text, examples, and quiz questions
 js/graphs.js      SVG graphs and interactive explorers
 js/blitz.js       Blitz practice quizzes (question generators + quiz view)
+js/prep.js        Prep plans: study sessions for each Blitz
 js/app.js         routing, navigation, quizzes, progress
 netlify.toml      Netlify settings
 ```
@@ -44,4 +45,4 @@ To add or edit a lesson, change `js/content.js`. Math is written in LaTeX betwee
 
 ## Adding a Blitz
 
-In `js/blitz.js`, write a `buildBlitzN()` function that returns an array of question objects (see the Blitz 1 generators for the shape: `prompt`, optional `graph`, `choices`, `answer`, `why`, `lesson`, `points`), then set `ready: true`, a `topic`, `covers`, and `build` on that entry in `BLITZES`.
+In `js/blitz.js`, write a `buildBlitzN()` function that returns an array of question objects (see the Blitz 1 generators for the shape: `prompt`, optional `graph`, `choices`, `answer`, `why`, `lesson`, `points`), then set `ready: true`, a `topic`, `covers`, and `build` on that entry in `BLITZES`. To give it a study plan, add an entry for it in `PLANS` in `js/prep.js`; it appears in the sidebar automatically.

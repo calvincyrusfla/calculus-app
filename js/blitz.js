@@ -579,6 +579,7 @@
       const rec = api.getRecord(b.id);
       const card = h(b.ready ? 'a' : 'div', { class: 'blitz-card' + (b.ready ? '' : ' is-soon'), href: b.ready ? `#/blitz/${b.id}` : null });
       card.innerHTML = `<h2>${b.title}</h2><p>${b.topic}</p>` +
+        (b.ready && window.Prep && Prep.has(b.id) ? `<p class="blitz-prep">Includes a study plan: <span>${b.title} prep plan</span></p>` : '') +
         (b.ready ? `<p class="blitz-meta">${rec ? `Best score ${pts(rec.best)} of 100, ${rec.attempts} attempt${rec.attempts === 1 ? '' : 's'}` : 'Not attempted yet'}</p>` : '<p class="blitz-meta">Not available yet</p>');
       list.appendChild(card);
     });
@@ -599,6 +600,7 @@
         <li>No feedback until you submit, like the real quiz</li>
         <li>New numbers every attempt, and a timer so you can track your pace</li>
       </ul>
+      ${window.Prep && Prep.has(b.id) ? `<p class="tip">New to this material? Work through the <a href="#/prep/${b.id}">${b.title} prep plan</a> first. It covers every question type with a method, an example, and practice.</p>` : ''}
       ${rec ? `<p class="muted">Best score so far: ${pts(rec.best)} of 100 across ${rec.attempts} attempt${rec.attempts === 1 ? '' : 's'}.</p>` : ''}`;
     const start = h('button', { type: 'button', class: 'btn' }, rec ? 'Start a new attempt' : `Start ${b.title}`);
     intro.appendChild(start);
@@ -717,7 +719,53 @@
     }
   }
 
+  /* ------------------------------------------------------------ single-question practice (used by prep plans) */
+  const GENERATORS = {
+    factor: q_factor, rationalize: q_rationalize, eval: q_eval, evenodd: q_evenodd, transform: q_transform,
+    isfunction: q_isfunction, domain: q_domain, domainrange: q_domainrange, piecewise: q_piecewise,
+    product: q_product, fxh: q_fxh, difference: q_difference, intercepts: q_intercepts, incdec: q_incdec,
+    piecegraph: q_piecegraph, recipgraph: q_recipgraph, readgraph: q_readgraph, reflect: q_reflect,
+    extrema: q_extrema, shrink: q_shrink, symmetry: q_symmetry,
+  };
+  function practice(host, keys, renderMath) {
+    const box = h('div', { class: 'practice' });
+    host.appendChild(box);
+    let turn = 0;
+    function next() {
+      const key = keys[turn++ % keys.length];
+      const q = build(GENERATORS[key]);
+      if (q.answer == null) q.answer = 0;
+      box.innerHTML = '';
+      box.appendChild(h('div', { class: 'bq-prompt' }, q.prompt));
+      if (q.graph) { const g = h('div', { class: 'bq-graph' }); drawGraph(g, q.graph, 300); box.appendChild(g); }
+      const order = q.fixed ? q.choices.map((_, i) => i) : shuffle(q.choices.map((_, i) => i));
+      const opts = h('div', { class: 'bq-choices' + (q.choices[0].graph ? ' has-graphs' : '') + (q.choices.every(c => typeof c === 'string' && c.length < 40) ? ' short' : '') });
+      const why = h('div', { class: 'bq-why', hidden: '' });
+      const again = h('button', { type: 'button', class: 'btn-small', hidden: '' }, 'Try another one');
+      again.addEventListener('click', next);
+      order.forEach(ci => {
+        const b = h('button', { type: 'button', class: 'bchoice' });
+        renderChoice(b, q.choices[ci]);
+        b.addEventListener('click', () => {
+          if (!why.hidden) return;
+          opts.querySelectorAll('button').forEach(x => { x.disabled = true; });
+          const ok = ci === q.answer;
+          b.classList.add(ok ? 'is-answer' : 'is-picked-wrong');
+          if (!ok) opts.children[order.indexOf(q.answer)].classList.add('is-answer');
+          why.innerHTML = `<strong class="${ok ? 'ok' : 'no'}">${ok ? 'Correct.' : 'Not quite.'}</strong> ${q.why}`;
+          why.hidden = false; again.hidden = false;
+          renderMath(why);
+        });
+        opts.appendChild(b);
+      });
+      box.append(opts, why, again);
+      renderMath(box);
+    }
+    next();
+  }
+
   window.Blitz = {
+    practice,
     list: BLITZES,
     get: id => BLITZES.find(b => b.id === id && b.ready),
     indexView,
