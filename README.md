@@ -10,9 +10,7 @@ Each lesson has a short explanation, worked examples revealed one step at a time
 
 **Blitz sessions** are full practice quizzes that mirror a class quiz (Blitz 1, 2, and 3 mirror the Quiz 1, 2, and 3 reviews: same question types and point values, 100 points each, no feedback until you submit). Each Blitz has a prep plan with study sessions and practice questions. Every question is generated from random values, so each attempt is a new version.
 
-An **AI tutor** (powered by Claude) can be opened from the button in the corner or from the "Ask the tutor" button on any worked example, quiz question, Blitz question, or practice question. It sees the problem you are on and coaches you through it. During an unsubmitted Blitz it gives hints only.
-
-Progress is saved in the browser (localStorage), so no account is needed.
+Progress is saved in the browser (localStorage), so no account or backend is needed.
 
 ## Run it locally
 
@@ -30,16 +28,6 @@ Then open http://localhost:8000.
 2. Branch: `main`. Build command: leave empty. Publish directory: `.` (already set in `netlify.toml`).
 3. Deploy. Every push to `main` redeploys automatically.
 
-## Setting up the AI tutor
-
-The tutor runs as a Netlify Function, so your API key stays on the server.
-
-1. Get an API key from the Claude Console (https://platform.claude.com).
-2. In Netlify: **Site configuration → Environment variables → Add a variable**. Name it `ANTHROPIC_API_KEY` and paste the key.
-3. Redeploy (Deploys → Trigger deploy). The tutor now works on the live site.
-
-Optional: set `TUTOR_MODEL` to use a different Claude model (default `claude-sonnet-5-5`). To test locally, run `netlify dev` instead of `python3 -m http.server`.
-
 ## Project layout
 
 ```
@@ -50,8 +38,6 @@ js/graphs.js      SVG graphs and interactive explorers
 js/blitz.js       Blitz practice quizzes (question generators + quiz view)
 js/prep.js        Prep plans: study sessions for each Blitz
 js/app.js         routing, navigation, quizzes, progress
-js/tutor.js       AI tutor chat panel
-netlify/functions/tutor.mjs   server function that calls the Claude API
 netlify.toml      Netlify settings
 ```
 

@@ -3,10 +3,6 @@
   publish = "."
   command = ""
 
-# Serverless function for the AI tutor (served at /api/tutor).
-[functions]
-  directory = "netlify/functions"
-
 [[headers]]
   for = "/*"
   [headers.values]
