@@ -571,15 +571,17 @@
       const d = pick([1, 2]), m = pick([2, 3, 4]), k = nz(-3, 3), b = nz(-6, 6), c = nz(-6, 6), g = nz(-6, 6);
       const a = d * m, e = d * k;
       const ans = poly([[m, 'x'], [-m * k, '']]);
+      const rx = b - m * g + m * k * k * d, rc = c + m * k * g;
+      const remChoice = rx !== 0 ? `Slant asymptote: $y = ${poly([[rx, 'x'], [rc, '']])}$` : 'Horizontal asymptote: $y = 0$';
       return {
         prompt: `Identify the asymptotes.<span class="bexpr">$f(x) = \\dfrac{${polyArr([a, 0, b, c])}}{${polyArr([d, e, g])}}$</span>`,
         choices: [
           `Slant asymptote: $y = ${ans}$`,
           `Slant asymptote: $y = ${poly([[m, 'x'], [m * k, '']])}$`,
           `Horizontal asymptote: $y = ${m}$`,
-          `Horizontal asymptote: $y = 0$`,
+          remChoice,
         ],
-        why: `The numerator's degree is one more than the denominator's, so there is a slant asymptote. Divide: $${a}x^3 \\div ${d === 1 ? '' : d}x^2 = ${m}x$. Then $${m}x(${polyArr([d, e, g])}) = ${polyArr([a, m * e, m * g, 0])}$; subtracting leaves $${-m * e}x^2$ as the next leading term, and $${-m * e}x^2 \\div ${d === 1 ? '' : d}x^2 = ${-m * k}$. So $y = ${ans}$.`,
+        why: `The numerator's degree is one more than the denominator's, so there is a slant asymptote. Write the missing $x^2$ term as $0x^2$ and divide: $${a}x^3 \\div ${d === 1 ? '' : d}x^2 = ${m}x$. Then $${m}x(${polyArr([d, e, g])}) = ${polyArr([a, m * e, m * g, 0])}$; subtracting leaves $${-m * e}x^2$ as the next leading term, and $${-m * e}x^2 \\div ${d === 1 ? '' : d}x^2 = ${-m * k}$. So $y = ${ans}$. The slant asymptote is the <strong>quotient</strong>; the leftover remainder${rx !== 0 ? `, $${poly([[rx, 'x'], [rc, '']])}$,` : ''} is not part of it.`,
         lesson: 'polynomial-rational',
       };
     }
@@ -621,7 +623,7 @@
   }
 
   // 3. Composition of a quadratic and a line
-  function q2_comppoly() {
+  function q2_comppoly_review() {
     const a = ri(2, 5), b = nz(-6, 6), c = nz(-9, 9), m = pick([-3, -2, 2, 3, 4]), k = nz(-7, 7);
     const gf = Math.random() < 0.65;
     const fT = polyArr([a, b, c]), gT = poly([[m, 'x'], [k, '']]);
@@ -641,7 +643,7 @@
   }
 
   // 4. Domain of a rational function
-  function q2_ratdomain() {
+  function q2_ratdomain_review() {
     const c = ri(2, 9), k = nz(-9, 9);
     const forms = [
       [`\\dfrac{${k}x}{x^2 + ${c * c}}`, 2, `$x^2 + ${c * c}$ is always positive, so the denominator is never $0$.`],
@@ -683,14 +685,18 @@
   function q2_compvalue() {
     const p = nz(-6, 6), q = pick([-3, -2, 2, 3, 4]), r = nz(-5, 5), c = nz(-4, 4);
     const f = x => x * x + p * x, g = x => q * x + r;
-    const v = f(g(c));
-    const pool = [-v, g(f(c)), f(c) * g(c), f(c) + g(c), v + 2 * p].filter(x => x !== v);
+    const fg = Math.random() < 0.5;
+    const name = fg ? '(f \\circ g)' : '(g \\circ f)';
+    const v = fg ? f(g(c)) : g(f(c));
+    const pool = [-v, fg ? g(f(c)) : f(g(c)), f(c) * g(c), f(c) + g(c), v + 2 * p, v - q].filter(x => x !== v);
     const others = [...new Set(pool)].slice(0, 3);
-    const fmt = n => `$(f \\circ g)(${c}) = ${n}$`;
+    const fmt = n => `$${name}(${c}) = ${n}$`;
     return {
-      prompt: `Evaluate the function for the given value of $x$.<span class="bexpr">$f(x) = ${poly([[1, 'x^2'], [p, 'x']])},\\quad g(x) = ${poly([[q, 'x'], [r, '']])},\\quad (f \\circ g)(${c}) = \\,?$</span>`,
+      prompt: `Evaluate the function for the given value of $x$.<span class="bexpr">$f(x) = ${poly([[1, 'x^2'], [p, 'x']])},\\quad g(x) = ${poly([[q, 'x'], [r, '']])},\\quad ${name}(${c}) = \\,?$</span>`,
       choices: [fmt(v), ...others.map(fmt)],
-      why: `Work inside out. $g(${c}) = ${g(c)}$. Then $f(${g(c)}) = (${g(c)})^2 ${p > 0 ? '+' : '-'} ${Math.abs(p)}(${g(c)}) = ${v}$.`,
+      why: fg
+        ? `Work inside out. $g(${c}) = ${g(c)}$. Then $f(${g(c)}) = (${g(c)})^2 ${p > 0 ? '+' : '-'} ${Math.abs(p)}(${g(c)}) = ${v}$.`
+        : `Work inside out: $f$ goes first. $f(${c}) = (${c})^2 ${p > 0 ? '+' : '-'} ${Math.abs(p)}(${c}) = ${f(c)}$. Then $g(${f(c)}) = ${q}(${f(c)}) ${r > 0 ? '+' : '-'} ${Math.abs(r)} = ${v}$.`,
       lesson: 'composition',
     };
   }
@@ -717,7 +723,7 @@
   }
 
   // 8. All zeros of a cubic with complex zeros
-  function q2_complexzeros() {
+  function q2_complexzeros_review() {
     const r = nz(-6, 6), al = nz(-3, 3), be = ri(1, 5);
     const quad = [1, -2 * al, al * al + be * be];
     const cubic = mul([1, -r], quad);
@@ -731,7 +737,7 @@
   }
 
   // 9. Degree-5 polynomial with two given zeros
-  function q2_solvegiven() {
+  function q2_solvegiven_review() {
     let p, r1, r2, al, be;
     do { p = pick([-5, -3, -1, 1, 3, 5]); r1 = nz(-4, 4); r2 = nz(-4, 4); al = nz(-3, 3); be = ri(1, 4); } while (r1 === r2 || Math.abs(r1) === Math.abs(r2));
     const f = mul(mul(mul([2, -p], [1, -r1]), [1, -r2]), [1, -2 * al, al * al + be * be]);
@@ -752,7 +758,7 @@
   }
 
   // 10. Inverse of a x^n + b
-  function q2_inverse() {
+  function q2_inverse_review() {
     const n = pick([3, 3, 5]), a = ri(2, 9), b = nz(-9, 9);
     const minus = poly([[1, 'x'], [-b, '']]), plus = poly([[1, 'x'], [b, '']]);
     return {
@@ -788,7 +794,7 @@
       };
     }
     let a, b, e, g;
-    do { a = pick([2, 3, 4, -2, -3]); b = nz(-9, 9); e = nz(-6, 6); g = nz(-9, 9); } while (b === a * e || x0 * x0 + e * x0 + g === 0);
+    do { a = pick([2, 3, 4, -2, -3]); b = nz(-9, 9); e = Math.random() < 0.4 ? 0 : nz(-6, 6); g = e === 0 ? ri(1, 12) : nz(-9, 9); } while (b === a * e || x0 * x0 + e * x0 + g === 0);
     const c = a * g - (b - a * e) * x0;
     const ab = (A, B) => `a. ${A}<br>b. ${B}`;
     return {
@@ -805,7 +811,7 @@
   }
 
   // 12. Intermediate value theorem
-  function q2_ivt() {
+  function q2_ivt_review() {
     const want = Math.random() < 0.5;
     for (let tries = 0; tries < 400; tries++) {
       const co = [pick([-3, -2, -1, 1, 2, 3]), ri(-8, 8), ri(-9, 9), ri(-25, 25)];
@@ -821,7 +827,7 @@
         lesson: 'polynomial-rational',
       };
     }
-    return q2_ivt();
+    return q2_ivt_review();
   }
 
   // 13. One-to-one from a graph
@@ -831,6 +837,7 @@
       { pieces: [{ f: x => x * x * x / 8 + x / 2, from: -3.4, to: 3.4, arrowStart: true, arrowEnd: true }] },
       { pieces: [{ f: x => Math.pow(2, x) - 3, from: -5.6, to: 3.1, arrowStart: true, arrowEnd: true }] },
       { pieces: [{ f: x => -0.6 * x + 1, from: -5.6, to: 5.6, arrowStart: true, arrowEnd: true }] },
+      { pieces: [{ f: x => 1 / x + 0.5, from: -5.6, to: -0.17 }, { f: x => 1 / x + 0.5, from: 0.17, to: 5.6 }] },
     ]) : pick([
       { pieces: [{ f: x => 4 * x / (1 + x * x) + 0.3, from: -5.6, to: 5.6 }] },
       { pieces: [{ f: x => 0.5 * (x - 1) * (x - 1) - 3, from: -2.4, to: 4.4, arrowStart: true, arrowEnd: true }] },
@@ -849,22 +856,25 @@
 
   // 14. Possible rational zeros
   function q2_rationalzeros() {
-    const L = pick([1, 1, 2]), C = pick([4, 6, 8, 9, 10, 12, 15]);
+    const L = pick([1, 2, 3, 4, 9, 25, 49]) * (Math.random() < 0.35 ? -1 : 1);
+    const C = pick([4, 6, 8, 10, 12, 15, 21, 35]);
     const facs = n => { const r = []; for (let i = 1; i <= n; i++) if (n % i === 0) r.push(i); return r; };
-    const vals = new Map();
-    facs(C).forEach(p => facs(L).forEach(q => { vals.set(p / q, frac(p, q)); }));
-    const list = [...vals.entries()].sort((x, y) => x[0] - y[0]).map(e => e[1]);
-    const recips = facs(C).map(q => frac(1, q));
-    const f = polyArr([L, ri(-6, 6), ri(-6, 6), ri(-6, 6), C]);
+    const make = (ps, qs) => {
+      const vals = new Map();
+      ps.forEach(p => qs.forEach(q => { vals.set(p / q, frac(p, q)); }));
+      return [...vals.entries()].sort((x, y) => x[0] - y[0]).map(e => e[1]);
+    };
+    const list = make(facs(C), facs(Math.abs(L))), swapped = make(facs(Math.abs(L)), facs(C));
+    const mid = [ri(-9, 9), ri(-9, 9), ri(-9, 9)];
     return {
-      prompt: `List the possible rational zeros.<span class="bexpr">$f(x) = ${f}$</span>`,
+      prompt: `List the possible rational zeros.<span class="bexpr">$f(x) = ${polyArr([L, ...mid, C])}$</span>`,
       choices: [
         `$${list.map(t => '\\pm ' + t).join(',\\ ')}$`,
         `$${list.join(',\\ ')}$`,
         `$${list.map(t => '-' + t).join(',\\ ')}$`,
-        `$${recips.map(t => '\\pm ' + t).join(',\\ ')}$`,
+        `$${swapped.map(t => '\\pm ' + t).join(',\\ ')}$`,
       ],
-      why: `Candidates are $\\pm\\dfrac{\\text{factors of } ${C}}{\\text{factors of } ${L}}$. Factors of ${C}: ${facs(C).join(', ')}. Factors of ${L}: ${facs(L).join(', ')}. Both signs are always included.`,
+      why: `Candidates are $\\pm\\dfrac{p}{q}$ with $p$ a factor of the constant ${C} (${facs(C).join(', ')}) and $q$ a factor of the leading coefficient ${Math.abs(L)} (${facs(Math.abs(L)).join(', ')}). The sign of the leading coefficient does not matter, both signs are always included, and repeats like $\\tfrac{7}{7} = 1$ are listed once.`,
       lesson: 'polynomial-rational',
     };
   }
@@ -884,9 +894,13 @@
 
   // 16. Quadratic inequality
   function q2_quadineq() {
-    let r1, r2;
-    do { r1 = nz(-9, 9); r2 = nz(-9, 9); } while (r1 >= r2 || r1 === -r2);
-    const s = sgn();
+    let A, u, r;
+    do { A = pick([1, 1, 2, 3, 5]); u = nz(-9, 9); r = nz(-8, 8); }
+    while (gcd(A, u) !== 1 || u === A * r || (A === 1 && u === -r));
+    const s = A === 1 ? sgn() : 1;
+    const neg = t => (t.startsWith('-') ? t.slice(1) : '-' + t);
+    const roots = [[u / A, frac(u, A)], [r, String(r)]].sort((p, q) => p[0] - q[0]);
+    const lo = roots[0][1], hi = roots[1][1];
     const op = pick(['\\le', '\\ge', '<', '>']);
     const strict = op === '<' || op === '>';
     const wantPos = op === '\\ge' || op === '>';
@@ -894,19 +908,20 @@
     const L = strict ? '(' : '[', Rb = strict ? ')' : ']';
     const out = (x, y) => `(-\\infty, ${x}${Rb} \\cup ${L}${y}, \\infty)`;
     const btw = (x, y) => `${L}${x}, ${y}${Rb}`;
-    const ans = outside ? out(r1, r2) : btw(r1, r2);
-    const other = outside ? btw(r1, r2) : out(r1, r2);
-    const neg = outside ? out(-r2, -r1) : btw(-r2, -r1);
+    const ans = outside ? out(lo, hi) : btw(lo, hi);
+    const other = outside ? btw(lo, hi) : out(lo, hi);
+    const flipped = outside ? out(neg(hi), neg(lo)) : btw(neg(hi), neg(lo));
+    const factored = `${s < 0 ? '-' : ''}(${poly([[A, 'x'], [-u, '']])})${xm(r)}`;
     return {
-      prompt: `Solve the inequality. Write the solution set in interval notation.<span class="bexpr">$${polyArr([s, -s * (r1 + r2), s * r1 * r2])} ${op} 0$</span>`,
-      choices: [`$${ans}$`, `$${other}$`, `$${neg}$`, '$(-\\infty, \\infty)$'],
-      why: `Factor: $${s < 0 ? '-' : ''}${xm(r1)}${xm(r2)} ${op} 0$. The zeros $${r1}$ and $${r2}$ split the line. ${s < 0 ? 'Because the leading coefficient is negative, the expression is negative outside the zeros and positive between them.' : 'The expression is positive outside the zeros and negative between them.'} So the solution is $${ans}$${strict ? '' : ', with endpoints included'}.`,
+      prompt: `Solve the inequality. Write the solution set in interval notation.<span class="bexpr">$${polyArr([s * A, -s * (A * r + u), s * u * r])} ${op} 0$</span>`,
+      choices: [`$${ans}$`, `$${other}$`, `$${flipped}$`, '$(-\\infty, \\infty)$'],
+      why: `Factor: $${factored} ${op} 0$${A > 1 ? ' (ac method)' : ''}. The zeros $${lo}$ and $${hi}$ split the line. ${s < 0 ? 'Because the leading coefficient is negative, the expression is negative outside the zeros and positive between them.' : 'The expression is positive outside the zeros and negative between them.'} So the solution is $${ans}$${strict ? '' : ', with endpoints included'}.`,
       lesson: 'equations',
     };
   }
 
   // 17. Rational inequality with x^2 / (x^2 + k^2)
-  function q2_ratineq() {
+  function q2_ratineq_review() {
     const k = ri(2, 12);
     const ops = [['\\ge', 2, 'The fraction is never negative, so every real number works.'],
       ['>', 1, 'The fraction is positive everywhere except $x = 0$, where it equals $0$.'],
@@ -946,9 +961,9 @@
 
   // 19. Vertical asymptotes
   function q2_vasym() {
-    const k = ri(2, 9);
+    const k = ri(2, 9), kk = Math.random() < 0.5 ? k * k : k;
     const forms = [
-      [`\\dfrac{x}{x^2 + ${k * k}}`, 0, `$x^2 + ${k * k}$ is never $0$, so there are no vertical asymptotes.`],
+      [`\\dfrac{x}{x^2 + ${kk}}`, 0, `$x^2 + ${kk}$ is never $0$ (it is always at least ${kk}), so there are no vertical asymptotes.`],
       [`\\dfrac{x}{x^2 - ${k * k}}`, 3, `$x^2 - ${k * k} = 0$ at $x = \\pm ${k}$, and the numerator is not $0$ there.`],
       [`\\dfrac{${k + 1}}{x - ${k}}`, 2, `The denominator is $0$ only at $x = ${k}$.`],
       [`\\dfrac{x + 1}{x^2 - ${k}x}`, 1, `$x^2 - ${k}x = x(x - ${k})$ is $0$ at $x = 0$ and $x = ${k}$.`],
@@ -993,9 +1008,129 @@
         zs([[0, m], [-p, n], [q, k]]),
       ],
       why: `Set each factor to zero. $x^${m}$ gives $0$ with multiplicity ${m}. $${xm(p)}^${n}$ gives $${p}$ with multiplicity ${n}. $${xm(-q)}^${k}$ gives $${-q}$ with multiplicity ${k}. The constant ${a} is not a zero.`,
-      lesson: 'polynomial-rational', points: 5.75,
+      lesson: 'polynomial-rational', points: 4.8,
     };
   }
+
+
+  /* ---- Quiz 2 question styles (mixed with the review styles) ---- */
+  function q2_comppoly_inverse() {
+    const m = pick([2, 3, 4, 5, 6, 8]), a = nz(-9, 9);
+    const fT = `\\dfrac{${poly([[1, 'x'], [-a, '']])}}{${m}}`, gT = poly([[m, 'x'], [a, '']]);
+    const gf = Math.random() < 0.5;
+    return {
+      prompt: `For the given functions $f$ and $g$, find the indicated composition.<span class="bexpr">$f(x) = ${fT},\\quad g(x) = ${gT},\\quad ${gf ? '(g \\circ f)(x)' : '(f \\circ g)(x)'}$</span>`,
+      choices: ['$x$', `$${poly([[1, 'x'], [2 * a, '']])}$`, `$${poly([[m, 'x'], [m * a + a, '']])}$`, `$x - \\tfrac{1}{${m}}$`],
+      why: gf
+        ? `$g(f(x)) = ${m}\\cdot\\dfrac{${poly([[1, 'x'], [-a, '']])}}{${m}} ${a > 0 ? '+' : '-'} ${Math.abs(a)} = (${poly([[1, 'x'], [-a, '']])}) ${a > 0 ? '+' : '-'} ${Math.abs(a)} = x$. The two functions undo each other: they are inverses, and composing inverses always gives $x$.`
+        : `$f(g(x)) = \\dfrac{(${gT}) ${a > 0 ? '-' : '+'} ${Math.abs(a)}}{${m}} = \\dfrac{${m}x}{${m}} = x$. The two functions undo each other: they are inverses, and composing inverses always gives $x$.`,
+      lesson: 'composition',
+    };
+  }
+  const q2_comppoly = () => (Math.random() < 0.35 ? q2_comppoly_inverse() : q2_comppoly_review());
+
+  function q2_ratdomain_hole() {
+    const c = ri(2, 12), m = c * c;
+    return {
+      prompt: `Write the domain in interval notation.<span class="bexpr">$f(x) = \\dfrac{x^2 - ${m}}{x + ${c}}$</span>`,
+      choices: [`$(-\\infty, -${c}) \\cup (-${c}, \\infty)$`, `$(-\\infty, ${c}) \\cup (${c}, \\infty)$`, '$(-\\infty, \\infty)$', `$(-\\infty, -${c}] \\cup [-${c}, \\infty)$`],
+      why: `The denominator is $0$ at $x = -${c}$. The factor cancels ($x^2 - ${m} = (x - ${c})(x + ${c})$), but the original function is still undefined there; the graph has a hole. So exclude $-${c}$, with parentheses.`,
+      lesson: 'functions',
+    };
+  }
+  const q2_ratdomain = () => (Math.random() < 0.35 ? q2_ratdomain_hole() : q2_ratdomain_review());
+
+  const rootTex = n => { const r = Math.round(Math.sqrt(n)); return r * r === n ? String(r) : `\\sqrt{${n}}`; };
+  function q2_complexzeros_biquad() {
+    let p, q;
+    do { p = pick([2, 3, 5, 6, 7, 10, 11, 13, 15, 17, 4, 9]); q = pick([1, 4, 9, 16, 25, 2, 3, 5]); } while (p === q);
+    const iT = n => (n === 1 ? 'i' : rootTex(n).startsWith('\\sqrt') ? `${rootTex(n)}\\,i` : `${rootTex(n)}i`);
+    const ch = (a, b) => `$\\pm ${a},\\ \\pm ${b}$`;
+    return {
+      prompt: `Find all the zeros.<span class="bexpr">$f(x) = ${polyArr([1, 0, q - p, 0, -p * q])}$</span>`,
+      choices: [ch(rootTex(p), iT(q)), ch(rootTex(p), rootTex(q)), ch(p, iT(q)), ch(p, rootTex(q))],
+      why: `Only even powers appear, so treat it as a quadratic in $x^2$: $(x^2)^2 ${q - p < 0 ? '-' : '+'} ${Math.abs(q - p) === 1 ? '' : Math.abs(q - p)}x^2 - ${p * q} = (x^2 - ${p})(x^2 + ${q})$. Then $x^2 = ${p}$ gives $x = \\pm ${rootTex(p)}$, and $x^2 = -${q}$ gives $x = \\pm ${iT(q)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+  const q2_complexzeros = () => (Math.random() < 0.5 ? q2_complexzeros_biquad() : q2_complexzeros_review());
+
+  function q2_solvegiven_quartic() {
+    const al = nz(-3, 3), be = ri(1, 4), p = pick([2, 3, 5, 6, 7, 10]);
+    const quad = [1, -2 * al, al * al + be * be];
+    const f = mul(quad, [1, 0, -p]);
+    const z = `${al} + ${be === 1 ? '' : be}i`;
+    const ch = (r, c) => `$\\pm ${r},\\ ${c}$`;
+    return {
+      prompt: `A polynomial $f(x)$ and one of its zeros are given. Find all the zeros.<span class="bexpr">$f(x) = ${polyArr(f)}$; $\\ ${z}$ is a zero</span>`,
+      choices: [ch(rootTex(p), cx(al, be)), ch(p, cx(al, be)), ch(rootTex(p), `\\pm ${Math.abs(al)} + ${be === 1 ? '' : be}i`), ch(p, `\\pm ${Math.abs(al)} + ${be === 1 ? '' : be}i`)],
+      why: `Complex zeros come in conjugate pairs, so $${cx(al, be)}$ are both zeros. Their product is $${polyArr(quad)}$. Dividing $f$ by it leaves $x^2 - ${p}$, so $x = \\pm ${rootTex(p)}$.`,
+      lesson: 'polynomial-rational',
+    };
+  }
+  const q2_solvegiven = () => (Math.random() < 0.5 ? q2_solvegiven_quartic() : q2_solvegiven_review());
+
+  function q2_inverse_rational() {
+    let a, b, c;
+    do { a = ri(2, 9); b = ri(2, 9); c = ri(1, 9); } while (gcd(a, b) !== 1 || gcd(b, c) !== 1 || a === c);
+    const ct = frac(c, b);
+    return {
+      prompt: `Find the inverse of the one-to-one function.<span class="bexpr">$f(x) = \\dfrac{${a}}{${poly([[b, 'x'], [-c, '']])}}$</span>`,
+      choices: [
+        `$f^{-1}(x) = \\dfrac{${a}}{${b}x} + ${ct}$`,
+        `$f^{-1}(x) = \\dfrac{${a}}{${b}y} + ${ct}$`,
+        `$f^{-1}(x) = \\dfrac{${poly([[b, 'x'], [-c, '']])}}{${a}}$`,
+        `$f^{-1}(x) = -${ct} - \\dfrac{${a}}{${b}x}$`,
+      ],
+      why: `Swap: $x = \\dfrac{${a}}{${b}y - ${c}}$. Multiply both sides by the denominator: $x(${b}y - ${c}) = ${a}$, so $${b}xy = ${a} + ${c}x$. Divide by $${b}x$: $y = \\dfrac{${a}}{${b}x} + ${ct}$. (Flipping the fraction gives the reciprocal, not the inverse.)`,
+      lesson: 'composition',
+    };
+  }
+  const q2_inverse = () => (Math.random() < 0.5 ? q2_inverse_rational() : q2_inverse_review());
+
+  function q2_ivt_values() {
+    for (let t = 0; t < 400; t++) {
+      const n = pick([3, 4, 5]);
+      const co = [pick([-4, -3, -2, 2, 3, 4])];
+      for (let i = 0; i < n; i++) co.push(Math.random() < 0.3 ? 0 : ri(-9, 9));
+      if (co[n] === 0) co[n] = nz(-9, 9);
+      const m = ri(-3, 2), fa = evalPoly(co, m), fb = evalPoly(co, m + 1);
+      if (!fa || !fb || Math.abs(fa) > 400 || Math.abs(fb) > 400) continue;
+      const opt = (x, y) => `$f(${m}) = ${x}$ and $f(${m + 1}) = ${y}$; ${(x < 0) !== (y < 0) ? 'yes' : 'no'}`;
+      const yes = (fa < 0) !== (fb < 0);
+      return {
+        prompt: `Use the Intermediate Value Theorem to determine whether the polynomial function has a real zero between the given integers.<span class="bexpr">$f(x) = ${polyArr(co)};\\ $ between $${m}$ and $${m + 1}$</span>`,
+        choices: [opt(fa, fb), opt(fa, -fb), opt(-fa, -fb), opt(-fa, fb)],
+        why: `$f(${m}) = ${fa}$ and $f(${m + 1}) = ${fb}$. Watch the signs of negative numbers raised to odd powers. ${yes ? 'The values have opposite signs, so the graph must cross zero in between: yes.' : 'Both values have the same sign, so the theorem does not guarantee a zero: no.'}`,
+        lesson: 'polynomial-rational',
+      };
+    }
+    return q2_ivt_review();
+  }
+  const q2_ivt = () => (Math.random() < 0.5 ? q2_ivt_values() : q2_ivt_review());
+
+  function q2_ratineq_linear() {
+    let a, b, c, d;
+    do { a = ri(1, 5); b = nz(-9, 9); c = nz(-6, 6); d = ri(1, 4); } while (b * d === -a * c || gcd(a, Math.abs(b)) !== 1 || gcd(d, Math.abs(c)) !== 1);
+    const zero = [b / a, frac(b, a), 'zero'], pole = [-c / d, frac(-c, d), 'pole'];
+    const [lo, hi] = [zero, pole].sort((x, y) => x[0] - y[0]);
+    const op = pick(['<', '>', '\\le', '\\ge']);
+    const strict = op === '<' || op === '>';
+    const wantNeg = op === '<' || op === '\\le';
+    const lb = e => (e[2] === 'zero' && !strict ? '[' : '('), rb = e => (e[2] === 'zero' && !strict ? ']' : ')');
+    const btw = (x, y, all) => `${all ? '[' : lb(x)}${x[1]}, ${y[1]}${all ? ']' : rb(y)}`;
+    const out = (x, y, all) => `(-\\infty, ${x[1]}${all ? ']' : rb(x)} \\cup ${all ? '[' : lb(y)}${y[1]}, \\infty)`;
+    const negP = e => [-e[0], e[1].startsWith('-') ? e[1].slice(1) : '-' + e[1], e[2]];
+    const region = (x, y, all) => (wantNeg ? btw(x, y, all) : out(x, y, all));
+    const ans = region(lo, hi), opp = wantNeg ? out(lo, hi) : btw(lo, hi);
+    return {
+      prompt: `Solve the inequality. Write the solution set in interval notation.<span class="bexpr">$\\dfrac{${poly([[a, 'x'], [-b, '']])}}{${poly([[c, ''], [d, 'x']])}} ${op} 0$</span>`,
+      choices: [`$${ans}$`, `$${opp}$`, `$${region(negP(hi), negP(lo))}$`, `$${region(lo, hi, true)}$`],
+      why: `The numerator is $0$ at $x = ${zero[1]}$ and the denominator is $0$ at $x = ${pole[1]}$. Those two points split the line. Test a value in each interval: the fraction is negative between them and positive outside. ${wantNeg ? 'We want negative, so take the middle interval.' : 'We want positive, so take the outer intervals.'} The point $${pole[1]}$ is never included (division by zero)${strict ? '' : `, but $${zero[1]}$ is, because the inequality allows $0$`}.`,
+      lesson: 'equations',
+    };
+  }
+  const q2_ratineq = () => (Math.random() < 0.5 ? q2_ratineq_linear() : q2_ratineq_review());
 
   function buildBlitz2() {
     const gens = [q2_asym, q2_compdomain, q2_comppoly, q2_ratdomain, q2_endbehavior, q2_compvalue, q2_factorzero,
@@ -1003,7 +1138,7 @@
       q2_quadineq, q2_ratineq, q2_synthetic, q2_vasym, q2_fromzeros, q2_multiplicity];
     return gens.map((gen, i) => {
       const q = build(gen);
-      q.points = q.points || (i === 10 ? 4 : 4.75);
+      q.points = q.points || 4.76;
       if (q.answer == null) q.answer = 0;
       return q;
     });
@@ -1337,7 +1472,7 @@
     },
     {
       id: '2', title: 'Blitz 2', topic: 'Polynomial and rational functions', ready: true, build: buildBlitz2, count: 21,
-      covers: 'composition and inverses, end behavior, dividing polynomials, finding real and complex zeros, the rational zero test, the intermediate value theorem, asymptotes, and polynomial and rational inequalities',
+      covers: 'every question style from the Quiz 2 review and the graded Quiz 2: composition and inverses, end behavior, dividing polynomials, finding real and complex zeros, the rational zero test, the intermediate value theorem, asymptotes, and polynomial and rational inequalities',
     },
     {
       id: '3', title: 'Blitz 3', topic: 'Exponential and logarithmic functions', ready: true, build: buildBlitz3, count: 18,

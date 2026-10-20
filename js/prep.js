@@ -299,7 +299,7 @@
     '2': {
       blitz: '2',
       title: 'Blitz 2 prep plan',
-      lede: 'Seven sessions that cover every question type on Blitz 2: composition and inverses, polynomial behavior, division, zeros, rational functions, and inequalities. Read the method, check the example, then practice until you get two in a row right.',
+      lede: 'Seven sessions that cover every question type on Blitz 2, including the extra styles from the graded Quiz 2: composition and inverses, polynomial behavior, division, zeros, rational functions, and inequalities. Read the method, check the example, then practice until you get two in a row right.',
       sessions: [
         {
           title: 'Composition and inverses',
@@ -313,6 +313,7 @@
                 R`Replace every $x$ in the outer function with the whole inner function, in parentheses.`,
                 R`For a number, work inside out: find $g(c)$, then plug that result into $f$.`,
                 R`Absolute value, polynomial, and linear functions have domain $(-\infty, \infty)$, so their compositions do too.`,
+                R`If the two functions undo each other (they are inverses), the composition simplifies all the way to $x$.`,
               ],
               example: {
                 problem: R`$f(x) = 4x^2 + 2x + 7$ and $g(x) = 2x - 3$. Find $(g \circ f)(x)$.`,
@@ -341,6 +342,23 @@
                 ],
               },
               trap: R`Writing $x + 2$ instead of $x - 2$, or forgetting the root. Each wrong choice skips or flips one step.`,
+            },
+            {
+              title: 'Inverse of a rational function', qs: [10], gens: ['inverse'], lesson: 'composition',
+              method: [
+                R`Swap $x$ and $y$, then multiply both sides by the denominator to clear the fraction.`,
+                R`Get the $y$ term alone on one side, then divide.`,
+                R`Split the answer into two fractions if the choices are written that way.`,
+              ],
+              example: {
+                problem: R`Find the inverse of $f(x) = \dfrac{3}{4x - 5}$.`,
+                steps: [
+                  R`Swap: $x = \dfrac{3}{4y - 5}$.`,
+                  R`Clear the fraction: $x(4y - 5) = 3$, so $4xy - 5x = 3$.`,
+                  R`Isolate: $4xy = 3 + 5x$, so $y = \dfrac{3 + 5x}{4x} = \dfrac{3}{4x} + \dfrac{5}{4}$.`,
+                ],
+              },
+              trap: R`Flipping the fraction to get $\dfrac{4x - 5}{3}$. That is the reciprocal, not the inverse. Also watch for an answer written in $y$ instead of $x$.`,
             },
           ],
         },
@@ -381,6 +399,7 @@
                 R`Evaluate $f$ at both endpoints of the interval.`,
                 R`Opposite signs: a polynomial must cross zero in between, so yes.`,
                 R`Same sign: the theorem does not guarantee a zero, so no.`,
+                R`When the choices list the values, compute both carefully first; only one choice has both numbers right.`,
               ],
               trap: R`Arithmetic slips with negatives cubed. $(-2)^3 = -8$, and $-5(-2) = +10$.`,
             },
@@ -439,7 +458,7 @@
                 R`List the factors $p$ of the constant term and the factors $q$ of the leading coefficient.`,
                 R`Possible rational zeros are $\pm\dfrac{p}{q}$. Always include both signs.`,
               ],
-              trap: R`Dropping the $\pm$, or putting the constant's factors on the bottom.`,
+              trap: R`Dropping the $\pm$, or putting the constant's factors on the bottom. A negative leading coefficient (like $-49x^4$) changes nothing: use the factors of 49.`,
             },
             {
               title: 'Factoring with a known zero', qs: [7], gens: ['factorzero'], lesson: 'polynomial-rational',
@@ -477,6 +496,39 @@
               },
               trap: R`Flipping the sign of the real part of the complex zeros. $1 \pm 5i$ and $-1 \pm 5i$ are both offered.`,
             },
+            {
+              title: 'Quadratic-form polynomials', qs: [8], gens: ['complexzeros'], lesson: 'polynomial-rational',
+              method: [
+                R`If only even powers appear ($x^4$, $x^2$, constant), let $u = x^2$ and factor like a quadratic.`,
+                R`$x^2 = k$ with $k > 0$ gives $x = \pm\sqrt{k}$. $\ x^2 = -k$ gives $x = \pm\sqrt{k}\,i$.`,
+              ],
+              example: {
+                problem: R`Find all zeros of $x^4 - 5x^2 - 36$.`,
+                steps: [
+                  R`$u^2 - 5u - 36 = (u - 9)(u + 4)$.`,
+                  R`$x^2 = 9$ gives $x = \pm 3$.`,
+                  R`$x^2 = -4$ gives $x = \pm 2i$. Zeros: $\pm 3,\ \pm 2i$.`,
+                ],
+              },
+              trap: R`Forgetting the square root ($\pm 13$ instead of $\pm\sqrt{13}$), or dropping the $i$ on the negative factor.`,
+            },
+            {
+              title: 'Quartic with one complex zero given', qs: [9], gens: ['solvegiven'], lesson: 'polynomial-rational',
+              method: [
+                R`Write the conjugate zero too: $a + bi$ comes with $a - bi$.`,
+                R`Their quadratic factor is $x^2 - 2ax + (a^2 + b^2)$.`,
+                R`Divide it out of the quartic; solve the quadratic that is left.`,
+              ],
+              example: {
+                problem: R`$f(x) = x^4 - 2x^3 + 2x^2 + 6x - 15$, and $1 + 2i$ is a zero. Find all zeros.`,
+                steps: [
+                  R`The conjugate $1 - 2i$ is also a zero. Factor: $x^2 - 2x + 5$.`,
+                  R`Divide: $f(x) = (x^2 - 2x + 5)(x^2 - 3)$.`,
+                  R`$x^2 = 3$ gives $\pm\sqrt{3}$. Zeros: $\pm\sqrt{3},\ 1 \pm 2i$.`,
+                ],
+              },
+              trap: R`Writing $\pm 1 + 2i$ instead of $1 \pm 2i$. The $\pm$ goes on the imaginary part.`,
+            },
           ],
         },
         {
@@ -490,6 +542,7 @@
                 R`Set the denominator equal to $0$ and solve. Those $x$-values are excluded from the domain.`,
                 R`Vertical asymptotes are at those values (after cancelling any common factor).`,
                 R`$x^2 + k$ with $k > 0$ is never zero: no restriction and no vertical asymptote.`,
+                R`Find the excluded values <strong>before</strong> cancelling. $\dfrac{x^2 - 25}{x + 5}$ simplifies to $x - 5$, but $x = -5$ is still excluded (a hole).`,
               ],
               trap: R`Solving $x^2 + 64 = 0$ as $x = \pm 8$. That is $x^2 - 64$. A sum of squares has no real zeros.`,
             },
@@ -498,6 +551,7 @@
               method: [
                 R`Compare degrees of top ($n$) and bottom ($d$).`,
                 R`$n < d$: $y = 0$. $\ n = d$: $y = $ ratio of leading coefficients. $\ n = d + 1$: slant asymptote, found by long division (ignore the remainder).`,
+                R`For long division, write $0$ for any missing power (like $0x^2$) so the terms line up.`,
                 R`To find where the graph crosses a horizontal asymptote $y = L$, solve $f(x) = L$. For $y = 0$, that is where the numerator is $0$.`,
               ],
               example: {
@@ -508,7 +562,7 @@
                   R`Slant asymptote: $y = 2x + 4$.`,
                 ],
               },
-              trap: R`Using the ratio of leading coefficients when the degrees are not equal.`,
+              trap: R`Choosing the <strong>remainder</strong> instead of the quotient. Here the remainder is $13x - 9$, and it is offered as a choice; the asymptote is the quotient, $y = 2x + 4$. Also: do not use the ratio of leading coefficients when the degrees are not equal.`,
             },
           ],
         },
@@ -521,6 +575,7 @@
               title: 'Quadratic inequalities', qs: [16], gens: ['quadineq'], lesson: 'equations',
               method: [
                 R`If the leading coefficient is negative, multiply by $-1$ and flip the inequality.`,
+                R`If the leading coefficient is not 1, factor with the ac method: $2x^2 - 5x - 3 = (2x + 1)(x - 3)$, zeros $-\tfrac12$ and $3$.`,
                 R`Factor and find the zeros. They split the number line into three intervals.`,
                 R`Test one value per interval. Use brackets for $\le$ or $\ge$, parentheses for $<$ or $>$.`,
               ],
@@ -542,6 +597,23 @@
                 R`$\ge 0$ includes the zeros; $> 0$ excludes them. If nothing works, the answer is no solution.`,
               ],
               trap: R`Treating $x^2 + 81$ as if it had zeros at $\pm 9$.`,
+            },
+            {
+              title: 'Rational inequalities with linear pieces', qs: [17], gens: ['ratineq'], lesson: 'equations',
+              method: [
+                R`Find the zero of the numerator and the zero of the denominator. They split the line into three intervals.`,
+                R`Test one number in each interval to see where the fraction is positive or negative.`,
+                R`The denominator's zero is never included. The numerator's zero is included only for $\le$ or $\ge$.`,
+              ],
+              example: {
+                problem: R`Solve $\dfrac{2x - 5}{x + 1} \ge 0$.`,
+                steps: [
+                  R`Numerator zero: $x = \tfrac52$. Denominator zero: $x = -1$.`,
+                  R`Test $x = 0$: $\tfrac{-5}{1} < 0$. Test $x = 3$: $\tfrac{1}{4} > 0$. Test $x = -2$: $\tfrac{-9}{-1} > 0$.`,
+                  R`Positive on the outside pieces: $(-\infty, -1) \cup \left[\tfrac52, \infty\right)$.`,
+                ],
+              },
+              trap: R`Using a bracket at the denominator's zero, or flipping the signs of the two key numbers.`,
             },
           ],
         },
